@@ -97,16 +97,33 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 28px;
+      justify-content: flex-start;
+      gap: 14px;
+      padding: 96px 24px 24px; /* deja libre el encabezado (Luna, estrellas, cuento) */
+      overflow-y: auto;
       border-radius: 28px;
       background: rgba(255, 255, 255, 0.97);
       text-align: center;
     }
-    .profile-picker h2 { color: var(--blue-dark); margin: 0; }
-    .profile-picker p { margin: 0 0 6px; }
+    /* Centra el contenido si cabe; si no cabe, arranca arriba y se puede desplazar. */
+    .profile-picker > :first-child { margin-top: auto; }
+    .profile-picker > :last-child { margin-bottom: auto; }
+    .profile-picker h2 { color: #1E3A8A; margin: 0; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+    .profile-picker p { margin: 0 0 6px; font-size: 1.2rem; color: #475569; }
+    .welcome-portrait { flex: none; width: 158px; height: 158px; border: 5px solid #3B82F6; border-radius: 50%; overflow: hidden; background: #EAF4FF; box-shadow: 0 4px 14px #0002; }
+    .welcome-portrait img { width:100%; height:100%; object-fit:cover; }
+    .tutor-portrait { display:grid; place-items:center; flex:none; border-radius:50%; overflow:hidden; background:#EAF4FF; border:3px solid #FFB347; }
+    .tutor-portrait.compact { width:58px; height:58px; }
+    .tutor-portrait img { width:100%; height:100%; object-fit:cover; }
+    .tutor-fallback { width:100%; height:100%; display:grid; place-items:center; font-size:2.5rem; background:#EAF4FF; }
+    .tutor-fallback[hidden] { display:none; }
+    .welcome-portrait .tutor-fallback { font-size:5rem; }
+    .tutor-portrait.luna-gesture, .welcome-portrait.luna-gesture { animation:luna-gesture .7s ease-in-out 3; }
+    @keyframes luna-gesture { 50% { transform:translateY(-7px) rotate(-5deg); box-shadow:0 0 0 9px #FFE08A; } }
+    .word.luna-point-cue { outline:3px solid #FBC02D; outline-offset:4px; animation:luna-word-point .8s ease-in-out 2; }
+    @keyframes luna-word-point { 50% { transform:scale(1.1); } }
     .profile-picker button { max-width: 420px; justify-content: center; }
+    @media (max-height: 620px) { .welcome-portrait { width: 110px; height: 110px; } }
     .profile-picker[hidden] { display: none; }
     .profile-options { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
     .profile-options[hidden] { display: none; }
@@ -128,7 +145,7 @@
     @keyframes confetti-fall { to { transform: translate3d(var(--drift), 110vh, 0) rotate(900deg); opacity: .15; } }
     @media (prefers-reduced-motion: reduce) { .confetti-piece { animation-duration: .8s; } }
 
-    /* ===== Banner y texto de la tutora Lina ===== */
+    /* ===== Banner y texto de la tutora Luna ===== */
     #statusBanner, .tutor-status {
       text-align: center;
       font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif;
@@ -408,11 +425,15 @@
     .options { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .option {
-      font-size: 15px;
-      padding: 8px 16px;
+      flex: 1 1 190px;
+      min-height: 54px;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 12px 18px;
       background: #FFFFFF;
       color: var(--text);
     }
+    .option:disabled, .listen-q:disabled { opacity:.55; cursor:not-allowed; }
 
     .option.correct { background: var(--green); color: #FFFFFF; }
     .option.wrong { background: var(--peach); color: #8A4B0F; }
@@ -479,10 +500,13 @@
 <div class="container">
   <div class="header">
     <div class="tutor">
-      <div class="avatar">👩‍🏫</div>
+      <div class="tutor-portrait compact">
+        <img id="tutorImg" src="tutora_luna.png" alt="Luna, tutora virtual de lectura">
+        <span class="tutor-fallback" hidden aria-hidden="true">🌙</span>
+      </div>
       <div>
         <div class="tutor-label">Tutora virtual</div>
-        <div class="tutor-name">Lina</div>
+        <div class="tutor-name">Luna</div>
       </div>
     </div>
     <div class="stars-box">⭐ <span id="stars">0</span></div>
@@ -495,9 +519,13 @@
   </div>
 
   <div class="profile-picker" id="profilePicker" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-    <h2 id="profileTitle">Elige tu nivel de lectura</h2>
-    <p>Lina ajustará el tiempo de espera y las pistas a tu ritmo.</p>
-    <button class="btn-mic" id="btnIniciarApp">🎙️ Iniciar Lectura con Lina</button>
+    <div class="welcome-portrait">
+      <img id="welcomeTutorImg" src="tutora_luna.png" alt="Luna, tu tutora virtual, te acompaña en la lectura">
+      <span class="tutor-fallback" hidden aria-hidden="true">🌙</span>
+    </div>
+    <h2 id="profileTitle">¡Hola! Soy Luna</h2>
+    <p>Tu tutora de lectura. Leeremos juntos, con calma y a tu ritmo.</p>
+    <button class="btn-mic" id="btnIniciarApp">🎙️ Comenzar lectura con Luna</button>
     <div class="profile-options" id="profileOptions" hidden>
       <p>Ahora elige tu nivel de lectura:</p>
       <button class="btn-echo" id="profileSyllabic">1.º/2.º Grado - Lectura Silábica</button>
@@ -507,7 +535,7 @@
 
   <div class="status-banner" id="statusBanner" role="status" aria-live="polite" aria-atomic="true">
     <span class="tutor-avatar" aria-hidden="true">👩‍🏫</span>
-    <span id="statusText">¡Hola! Soy Lina. Vamos a leer juntos a tu ritmo.</span>
+    <span id="statusText">¡Hola! Soy Luna. Vamos a leer juntos a tu ritmo.</span>
   </div>
 
   <div class="reading-tools" role="group" aria-label="Herramientas de lectura accesible">
@@ -672,16 +700,16 @@
   let sessionSaved = false;
   let consumedPerResult = {};     // palabras ya procesadas por resultado de reconocimiento
   let lastRestartAt = 0;
-  let isPausedForTTS = false;     // el micrófono está en pausa mientras habla Lina
-  let helpToken = 0;              // identifica la voz de Lina más reciente
+  let isPausedForTTS = false;     // el micrófono está en pausa mientras habla Luna
+  let helpToken = 0;              // identifica la voz de Luna más reciente
   let narrationActiveIndex = -1;  // palabra resaltada durante la lectura guiada
   let lastParagraphRewarded = -1; // último párrafo completado que ya dio estrellas
   let hesitationTimer = null;     // temporizador de ayuda espontánea
-  let hintedIndex = -1;           // palabra con la que Lina ya ayudó (una vez por palabra)
+  let hintedIndex = -1;           // palabra con la que Luna ya ayudó (una vez por palabra)
   let drill = null;               // { start, end, resume } mientras se relee una frase
   let stats = null;               // indicadores de lectura (profiling)
 
-  // Modo eco (Lina lee una frase y el niño la repite)
+  // Modo eco (Luna lee una frase y el niño la repite)
   let echoLines = [];             // [{ start, end }] índices globales de cada frase
   let echoActive = false;
   let estadoTurno = 'IDLE';       // 'IDLE', 'NARRATING', 'WAITING_CHILD', 'HELPING', 'TRANSITION'
@@ -718,16 +746,43 @@
     pistaModeladoIntro: 'audios/fase5_modelado_intro.m4a',
     phraseDrill: 'audios/fase5_phrase_drill.m4a',
     celebracion: 'audios/fase6_celebracion.m4a',
-    preguntaIntro: 'audios/fase6_pregunta_intro.m4a'
+    preguntaIntro: 'audios/fase6_pregunta_intro.m4a',
+    transicionPreguntas: 'audios/fase6_transicion_preguntas.m4a',
+    practicaIntro: 'audios/fase6_practica_intro.m4a',
+    muyBien: 'audios/muy_bien.m4a',
+    despedidaFinal: 'audios/fase6_despedida_final.m4a'
   };
-  let audioLinaActual = null;
-  let tokenAudioLina = 0;
-  let temporizadorAudioLina = null;
+  let audioLunaActual = null;
+  let tokenAudioLuna = 0;
+  let temporizadorAudioLuna = null;
+  // Rutas candidatas: acepta carpeta audio/ o audios/, extensión .m4a o .mp3 y los nombres alternos del guion.
+  const ALIAS_AUDIO = { 'fase1_bienvenida': ['bienvenida_luna'], 'estrellas': ['estrellas_sfx'] };
+  function candidatosAudio(ruta) {
+    const m = /^(?:(.*)\/)?([^\/]+)\.(m4a|mp3)$/i.exec(ruta);
+    if (!m) return [ruta];
+    const dir = m[1] || '', nombre = m[2], ext = m[3].toLowerCase();
+    const dirs = [...new Set([dir, dir.replace(/^audio\//, 'audios/'), dir.replace(/^audios\//, 'audio/')])];
+    const nombres = [nombre, ...(ALIAS_AUDIO[nombre] || [])];
+    const exts = [ext, ext === 'm4a' ? 'mp3' : 'm4a'];
+    const out = [];
+    nombres.forEach(n => exts.forEach(e => dirs.forEach(d => out.push((d ? d + '/' : '') + n + '.' + e))));
+    return [...new Set(out)];
+  }
+  // Efecto de estrellas: si la primera ruta falla, prueba las alternativas.
+  const SFX_ESTRELLAS = (() => {
+    if (typeof Audio === 'undefined') return null;
+    const rutas = candidatosAudio('audios/estrellas.mp3');
+    let i = 0;
+    const a = new Audio(rutas[0]);
+    a.addEventListener('error', () => { if (++i < rutas.length) { a.src = rutas[i]; a.load(); } });
+    return a;
+  })();
   let wordPracticeActive = false;
   let wordPracticePrompting = false;
   let wordPracticeList = [];
   let wordPracticeIndex = 0;
   let wordPracticeTimer = null;
+  let preguntasHabilitadas = false;
   let perfilLectura = null;
   let ltmStage = 0;
   let ltmStartedAt = 0;
@@ -781,7 +836,7 @@
       iwlCount: 0,
       errorWords: new Set(),       // omisiones y sustituciones (afectan la precisión)
       hesitationWords: new Set(),  // palabras con vacilación
-      helpWords: new Set(),        // palabras en las que Lina o el niño pidió ayuda
+      helpWords: new Set(),        // palabras en las que Luna o el niño pidió ayuda
       activeMs: 0,             // tiempo total de lectura con el micrófono activo
       segmentStart: null,
       lastAdvanceAt: null,
@@ -888,7 +943,7 @@
     clearTimeout(temporizadorInactividad);
 
     detenerAudioOracion();
-    detenerVozHumanaLina();
+    detenerVozHumanaLuna();
     currentStoryObject = cuentoObjeto;
     currentStoryTitle = cuentoObjeto.titulo || 'Lectura nueva';
     storyParagraphs = cuentoObjeto.frases.filter(Boolean);
@@ -916,7 +971,7 @@
     renderText();
     echoLines = buildEchoLines();
     setStatus(`👩‍🏫 Cuento: «${currentStoryTitle}». ¡Comencemos!`, 'info');
-    if (anunciar && perfilLectura) hablarLina(`Vamos a leer: ${currentStoryTitle}. ¡Comencemos!`);
+    if (anunciar && perfilLectura) hablarLuna(`Vamos a leer: ${currentStoryTitle}. ¡Comencemos!`);
   }
 
   // ===== Síntesis de voz (TTS) =====
@@ -949,13 +1004,13 @@
   }
 
   // Detiene una locución MP3 activa e invalida sus callbacks para evitar arranques tardíos.
-  function detenerVozHumanaLina() {
-    tokenAudioLina++;
-    clearTimeout(temporizadorAudioLina);
-    temporizadorAudioLina = null;
-    if (audioLinaActual) {
-      const previous = audioLinaActual;
-      audioLinaActual = null;
+  function detenerVozHumanaLuna() {
+    tokenAudioLuna++;
+    clearTimeout(temporizadorAudioLuna);
+    temporizadorAudioLuna = null;
+    if (audioLunaActual) {
+      const previous = audioLunaActual;
+      audioLunaActual = null;
       previous.onended = previous.onerror = previous.onstalled = null;
       try { previous.pause(); previous.currentTime = 0; } catch (e) {}
     }
@@ -966,9 +1021,9 @@
    * la reproduce con síntesis de voz; al terminar ejecuta callback y restaura el micrófono
    * solo si el flujo de lectura continúa esperando al estudiante.
    */
-  function reproducirVozHumanaLina(clave, textoRespaldo, callback) {
-    detenerVozHumanaLina();
-    const token = tokenAudioLina;
+  function reproducirVozHumanaLuna(clave, textoRespaldo, callback) {
+    detenerVozHumanaLuna();
+    const token = tokenAudioLuna;
     const wasListening = isListening;
     const wasEcho = echoActive;
     if (wasEcho) echoMicOff();
@@ -982,26 +1037,28 @@
     let settled = false;
     let fallbackStarted = false;
     const finish = () => {
-      if (settled || token !== tokenAudioLina) return;
+      if (settled || token !== tokenAudioLuna) return;
       settled = true;
-      clearTimeout(temporizadorAudioLina);
-      temporizadorAudioLina = null;
-      audioLinaActual = null;
+      clearTimeout(temporizadorAudioLuna);
+      temporizadorAudioLuna = null;
+      audioLunaActual = null;
       if (callback) callback();
-      if (echoActive && !echoPaused && estadoTurno === 'WAITING_CHILD') echoMicOn();
-      else if (wasListening && isListening && !echoActive && recognition) {
+      // Un callback puede iniciar otra locución; no rearma el micrófono en medio de esa voz.
+      if (token !== tokenAudioLuna) return;
+      if (!callback && echoActive && !echoPaused && estadoTurno === 'WAITING_CHILD') echoMicOn();
+      else if (!callback && wasListening && isListening && !echoActive && recognition) {
         isPausedForTTS = false;
         consumedPerResult = {};
         try { lastRestartAt = Date.now(); recognition.start(); } catch (e) {}
       }
     };
     const useTTS = () => {
-      if (settled || fallbackStarted || token !== tokenAudioLina) return;
+      if (settled || fallbackStarted || token !== tokenAudioLuna) return;
       fallbackStarted = true;
-      clearTimeout(temporizadorAudioLina);
-      temporizadorAudioLina = null;
-      const audio = audioLinaActual;
-      audioLinaActual = null;
+      clearTimeout(temporizadorAudioLuna);
+      temporizadorAudioLuna = null;
+      const audio = audioLunaActual;
+      audioLunaActual = null;
       if (audio) {
         audio.onended = audio.onerror = audio.onstalled = null;
         try { audio.pause(); audio.currentTime = 0; } catch (e) {}
@@ -1012,24 +1069,36 @@
 
     const path = AUDIOS_LINA[clave];
     if (!path || typeof Audio === 'undefined') { useTTS(); return; }
-    const audio = new Audio(path);
-    audioLinaActual = audio;
-    audio.preload = 'auto';
-    audio.onended = finish;
-    audio.onerror = useTTS;
-    audio.onstalled = useTTS;
+    const rutas = candidatosAudio(path);
     // Si la ruta no responde, no bloquea el paso de fase.
-    temporizadorAudioLina = setTimeout(useTTS, 15000);
-    try {
-      const result = audio.play();
-      if (result && typeof result.catch === 'function') result.catch(useTTS);
-    } catch (e) { useTTS(); }
+    temporizadorAudioLuna = setTimeout(useTTS, 15000);
+    const intentar = (n) => {
+      if (settled || fallbackStarted || token !== tokenAudioLuna) return;
+      if (n >= rutas.length) { useTTS(); return; }
+      const audio = new Audio(rutas[n]);
+      audioLunaActual = audio;
+      audio.preload = 'auto';
+      const siguiente = () => {
+        if (audioLunaActual !== audio) return;
+        audio.onended = audio.onerror = audio.onstalled = null;
+        try { audio.pause(); } catch (e) {}
+        intentar(n + 1);
+      };
+      audio.onended = finish;
+      audio.onerror = siguiente;
+      audio.onstalled = siguiente;
+      try {
+        const result = audio.play();
+        if (result && typeof result.catch === 'function') result.catch(siguiente);
+      } catch (e) { siguiente(); }
+    };
+    intentar(0);
   }
 
-  // Lina habla. Si el micrófono está activo, se pausa mientras suena la voz y se reanuda al terminar,
+  // Luna habla. Si el micrófono está activo, se pausa mientras suena la voz y se reanuda al terminar,
   // así no escucha el altavoz ni marca palabras por error.
-  function hablarLina(texto, callback) {
-    detenerVozHumanaLina();
+  function hablarLuna(texto, callback) {
+    detenerVozHumanaLuna();
     if (!synth) {
       if (callback) callback();
       return;
@@ -1037,7 +1106,7 @@
 
     const myToken = ++helpToken;
     const reanudar = () => {
-      if (myToken !== helpToken) return; // hay una voz de Lina más reciente en curso
+      if (myToken !== helpToken) return; // hay una voz de Luna más reciente en curso
       isPausedForTTS = false;
       if (isListening && recognition) {
         if (permissionPersists) {
@@ -1059,7 +1128,7 @@
       isPausedForTTS = true;
       clearTimeout(hesitationTimer);
       // Con permiso persistente se detiene el micrófono. Sin él, detenerlo y reiniciarlo
-      // volvería a pedir permiso, así que solo se ignora lo que oye mientras Lina habla.
+      // volvería a pedir permiso, así que solo se ignora lo que oye mientras Luna habla.
       if (permissionPersists) {
         try { recognition.stop(); } catch (e) {}
       }
@@ -1078,9 +1147,9 @@
     }
     element.classList.add('ltm-visual-cue');
     if (isListening) stats.helpWords.add(Number(element.dataset.index));
-    setStatus(`Lina pronuncia: "${clean}"`, '');
+    setStatus(`Luna pronuncia: "${clean}"`, '');
     if (isNarrating) stopNarration();
-    hablarLina(clean);
+    hablarLuna(clean);
   }
 
   // ===== Modo lectura guiada (Escuchar cuento completo) =====
@@ -1091,12 +1160,12 @@
     }
     if (echoActive) stopEcho(false);
     stopListening();
-    detenerVozHumanaLina();
+    detenerVozHumanaLuna();
     synth.cancel();
     isNarrating = true;
     btnReadAll.classList.add('speaking');
     btnReadAllText.textContent = 'Detener lectura';
-    setStatus('Escucha cómo lee Lina el cuento completo...', '');
+    setStatus('Escucha cómo lee Luna el cuento completo...', '');
 
     allSpans.forEach(s => s.classList.remove('active'));
     narrationActiveIndex = -1;
@@ -1121,7 +1190,7 @@
         if (isNarrating) setNarrationWord(startIndex);
       };
 
-      // Ilumina en tiempo real la palabra que Lina está leyendo
+      // Ilumina en tiempo real la palabra que Luna está leyendo
       u.onboundary = (event) => {
         if (!isNarrating) return;
         if (event.name && event.name !== 'word') return;
@@ -1166,7 +1235,7 @@
   }
 
   function stopNarration() {
-    detenerVozHumanaLina();
+    detenerVozHumanaLuna();
     if (synth) synth.cancel();
     finishNarrationUI();
   }
@@ -1176,7 +1245,7 @@
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setStatus('Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Microsoft Edge para leer con Lina. Aún puedes tocar las palabras y escuchar el cuento.', 'warn');
+      setStatus('Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Microsoft Edge para leer con Luna. Aún puedes tocar las palabras y escuchar el cuento.', 'warn');
       btnListen.disabled = true;
       document.getElementById('btnTouchMode').hidden = false;
       return;
@@ -1393,12 +1462,12 @@
         const silaba = obtenerPrimeraSilaba(displayWord(idx));
         setStatus(`Pista: la palabra empieza con «${silaba}…»`, '');
         preserveLtmStageAfterSpeech = true;
-        hablarLina(`Empieza con ${silaba}...`, programarAyudaNormal);
+        hablarLuna(`Empieza con ${silaba}...`, programarAyudaNormal);
       } else {
         const texto = displayWord(idx);
-        setStatus(`Lina modela la palabra: «${texto}». Intenta leerla.`, '');
+        setStatus(`Luna modela la palabra: «${texto}». Intenta leerla.`, '');
         preserveLtmStageAfterSpeech = true;
-        hablarLina(`${texto}. Intenta decirla.`, programarAyudaNormal);
+        hablarLuna(`${texto}. Intenta decirla.`, programarAyudaNormal);
         hintedIndex = idx;
       }
       ltmStage++;
@@ -1428,7 +1497,7 @@
     return sentences;
   }
 
-  // Lina modela la frase con más dificultades y el niño la relee
+  // Luna modela la frase con más dificultades y el niño la relee
   function startPhraseDrill(p) {
     let best = null;
     let bestCount = 0;
@@ -1447,9 +1516,9 @@
     focusCurrent();
 
     const frase = allSpans.slice(s, e + 1).map(w => w.textContent).join(' ').replace(/[-–—]/g, ' ');
-    setStatus('🔁 Vamos a releer esta frase juntas. Escucha a Lina y léela otra vez.', 'warn');
-    reproducirVozHumanaLina('phraseDrill', '¡Muy bien! Ahora volvamos a leer la frase completa.', () => {
-      if (drill && synth) hablarLina(frase);
+    setStatus('🔁 Vamos a releer esta frase juntas. Escucha a Luna y léela otra vez.', 'warn');
+    reproducirVozHumanaLuna('phraseDrill', '¡Muy bien! Ahora volvamos a leer la frase completa.', () => {
+      if (drill && synth) hablarLuna(frase);
     });
     return true;
   }
@@ -1523,7 +1592,7 @@
       // Retroalimentación inmediata: voz si se saltan 2 o más palabras, aviso en pantalla si es 1
       if (skippedWords.length >= 2) {
         omissionNote = `⚠️ Te saltaste: "${skippedWords.join(' ')}"`;
-        hablarLina(`Te saltaste las palabras: "${skippedWords.join(' ')}". Seguimos desde ${displayWord(hit)}.`);
+        hablarLuna(`Te saltaste las palabras: "${skippedWords.join(' ')}". Seguimos desde ${displayWord(hit)}.`);
       } else if (skippedWords.length === 1) {
         omissionNote = `⚠️ Omitiste la palabra: "${skippedWords[0]}"`;
       }
@@ -1550,8 +1619,7 @@
     while (lastParagraphRewarded + 1 < paragraphEnds.length &&
            paragraphEnds[lastParagraphRewarded + 1] < currentWordIndex) {
       lastParagraphRewarded++;
-      starsCount += 2;
-      starsDisplay.textContent = starsCount;
+      otorgarEstrellas(2);
       message = `⭐ +2 estrellas por completar el párrafo ${lastParagraphRewarded + 1}. ¡Sigue así!`;
 
       // Si hubo varios errores en el párrafo, se prepara una relectura de la frase más difícil
@@ -1609,7 +1677,7 @@
     document.getElementById('sessionHistory').textContent =
       `Progreso acumulado: ${historial.estrellasTotales} estrellas · Precisión de hoy: ${report.accuracy}%`;
     const palabras = document.getElementById('sessionWords');
-    const practica = palabrasConAyuda.slice(0, 3);
+    const practica = [...new Set(palabrasConAyuda)].slice(0, 3);
     palabras.textContent = practica.length
       ? `Palabras para practicar: ${practica.join(' · ')}`
       : '¡Leíste con mucha fluidez y sin palabras para repasar!';
@@ -1623,16 +1691,21 @@
     document.getElementById('sessionPraise').textContent = palabrasConAyuda.length
       ? '¡Lo hiciste excelente! Cada día lees mejor.'
       : '¡Leíste con mucha fluidez y sin detenerte!';
-    reproducirVozHumanaLina('celebracion', saludo, () => {
-      reproducirVozHumanaLina('preguntaIntro', 'Cuéntame: ¿Qué fue lo que más te gustó de esta historia?');
+    reproducirVozHumanaLuna('celebracion', saludo, () => {
+      setStatus('¡Excelente! Ahora vamos a responder unas preguntas sobre el cuento.', 'info');
+      reproducirVozHumanaLuna(
+        'transicionPreguntas',
+        '¡Excelente! Ahora vamos a responder unas preguntas sobre el cuento.',
+        habilitarPreguntasComprension
+      );
     });
   }
 
   // ===== Fin de la lectura: reporte y comprensión =====
   function completeReading() {
+    preguntasHabilitadas = false;
     stopListening();
-    starsCount += 15;
-    starsDisplay.textContent = starsCount;
+    otorgarEstrellas(15);
 
     const report = computeReport();
     const estrellasGanadas = Math.max(0, starsCount - starsAtStoryStart);
@@ -1675,13 +1748,14 @@
 
     const practiceList = document.getElementById('practiceList');
     practiceList.innerHTML = '';
-    if (report.practice.length === 0) {
+    const sessionPracticeWords = [...new Set(wordPracticeList)].slice(0, 3);
+    if (sessionPracticeWords.length === 0) {
       const chip = document.createElement('span');
       chip.className = 'chip good';
       chip.textContent = '¡Ninguna! Leíste todo muy bien';
       practiceList.appendChild(chip);
     } else {
-      report.practice.forEach(w => {
+      sessionPracticeWords.forEach(w => {
         const chip = document.createElement('span');
         chip.className = 'chip';
         chip.textContent = w;
@@ -1696,10 +1770,19 @@
     reportEl.scrollTop = 0;
   }
 
+  function habilitarPreguntasComprension() {
+    preguntasHabilitadas = true;
+    const box = document.getElementById('questions');
+    box.setAttribute('aria-busy', 'false');
+    box.querySelectorAll('button').forEach(button => { button.disabled = false; });
+    setStatus('¡Excelente! Ya puedes elegir una respuesta para cada pregunta.', 'info');
+  }
+
   function renderQuestions() {
     const box = document.getElementById('questions');
     const result = document.getElementById('qResult');
     box.innerHTML = '';
+    box.setAttribute('aria-busy', String(!preguntasHabilitadas));
     result.textContent = '';
     let answered = 0;
     let correct = 0;
@@ -1714,7 +1797,9 @@
       label.textContent = item.q;
       const listen = document.createElement('button');
       listen.className = 'listen-q';
-      listen.textContent = '🔊';
+      listen.textContent = '🔊 Escuchar';
+      listen.disabled = !preguntasHabilitadas;
+      listen.setAttribute('aria-label', `Escuchar pregunta: ${item.q}`);
       listen.addEventListener('click', () => speakText(item.q));
       title.appendChild(label);
       title.appendChild(listen);
@@ -1729,6 +1814,7 @@
         const b = document.createElement('button');
         b.className = 'option';
         b.textContent = text;
+        b.disabled = !preguntasHabilitadas;
         b.addEventListener('click', () => {
           if (done) return;
           done = true;
@@ -1757,7 +1843,7 @@
 
   function hideReport() {
     reportEl.classList.remove('show');
-    detenerVozHumanaLina();
+    detenerVozHumanaLuna();
     if (synth) synth.cancel();
   }
 
@@ -1782,7 +1868,7 @@
   async function startListening() {
     if (echoActive) stopEcho(false);
     if (!recognition || isListening) return;
-    detenerVozHumanaLina();
+    detenerVozHumanaLuna();
     setStatus('Acepta el permiso del micrófono cuando el navegador te lo pida.', '');
     const ok = await ensureMic();
     if (!ok || isListening) return;
@@ -1819,7 +1905,7 @@
 
     btnListen.classList.add('listening');
     btnListenText.textContent = 'Detener lectura';
-    setStatus('Lina te escucha... ¡Empieza a leer en voz alta!', '');
+    setStatus('Luna te escucha... ¡Empieza a leer en voz alta!', '');
   }
 
   function stopListening() {
@@ -1849,7 +1935,7 @@
     else startListening();
   }
 
-  // ===== Modo eco: Lina lee una frase y el niño la repite =====
+  // ===== Modo eco: Luna lee una frase y el niño la repite =====
   const btnEcho = document.getElementById('btnEcho');
   const btnEchoText = document.getElementById('btnEchoText');
   const echoLimitSelect = document.getElementById('echoLimit');
@@ -1874,8 +1960,17 @@
   }
 
   function otorgarEstrellas(n) {
-    starsCount += n;
+    const ganadas = Math.max(0, Number(n) || 0);
+    if (!ganadas) return;
+    starsCount += ganadas;
     starsDisplay.textContent = starsCount;
+    if (!calmModeActive && SFX_ESTRELLAS) {
+      try {
+        SFX_ESTRELLAS.currentTime = 0;
+        const playback = SFX_ESTRELLAS.play();
+        if (playback && typeof playback.catch === 'function') playback.catch(() => {});
+      } catch (e) {}
+    }
   }
 
   function closeStatsSegment() {
@@ -1982,7 +2077,7 @@
     if (!echoActive || echoPaused || tokenEco !== echoToken) return;
     const count = Math.max(1, end - start + 1);
     const duration = Math.min(6500, Math.max(2200, count * 430));
-    setStatus('Lina te muestra la oración. Escúchala o léela en pantalla...', 'info');
+    setStatus('Luna te muestra la oración. Escúchala o léela en pantalla...', 'info');
     temporizadorAudioFallback = setTimeout(() => {
       temporizadorAudioFallback = null;
       if (echoActive && !echoPaused && tokenEco === echoToken) activarTurnoNiño();
@@ -1998,10 +2093,24 @@
 
     const playbackToken = ++tokenAudioOracion;
     let fallbackStarted = false;
-    const audio = new Audio(audioPath);
+    const rutasOracion = candidatosAudio(audioPath);
+    let audio = new Audio(rutasOracion[0]);
+    let rutaN = 0;
     audioOracionActual = audio;
     audio.preload = 'auto';
     audio.volume = 1;
+    const probarOtraRuta = () => {
+      if (fallbackStarted || playbackToken !== tokenAudioOracion || !echoActive || echoPaused || tokenEco !== echoToken) return;
+      if (++rutaN >= rutasOracion.length) { failToFallback(); return; }
+      audio.onended = audio.onerror = audio.onstalled = null;
+      try { audio.pause(); } catch (e) {}
+      audio = new Audio(rutasOracion[rutaN]);
+      audioOracionActual = audio;
+      audio.preload = 'auto';
+      enlazar();
+      try { const r = audio.play(); if (r && typeof r.catch === 'function') r.catch(probarOtraRuta); }
+      catch (e) { probarOtraRuta(); }
+    };
     const failToFallback = () => {
       if (fallbackStarted || playbackToken !== tokenAudioOracion || !echoActive || echoPaused || tokenEco !== echoToken) return;
       fallbackStarted = true;
@@ -2011,23 +2120,26 @@
       if (audioOracionActual === audio) audioOracionActual = null;
       activarRespaldoNarracion(texto, start, end, tokenEco);
     };
-    audio.onended = () => {
-      if (playbackToken !== tokenAudioOracion || !echoActive || echoPaused || tokenEco !== echoToken) return;
-      clearTimeout(temporizadorAudioFallback);
-      audioOracionActual = null;
-      activarTurnoNiño();
+    const enlazar = () => {
+      audio.onended = () => {
+        if (playbackToken !== tokenAudioOracion || !echoActive || echoPaused || tokenEco !== echoToken) return;
+        clearTimeout(temporizadorAudioFallback);
+        audioOracionActual = null;
+        activarTurnoNiño();
+      };
+      audio.onerror = probarOtraRuta;
+      audio.onstalled = probarOtraRuta;
     };
-    audio.onerror = failToFallback;
-    audio.onstalled = failToFallback;
+    enlazar();
     // Red de seguridad para fallos de servidor que no disparen error/onstalled.
     temporizadorAudioFallback = setTimeout(failToFallback, 12000);
     try {
       const playback = audio.play();
-      if (playback && typeof playback.catch === 'function') playback.catch(failToFallback);
-    } catch (e) { failToFallback(); }
+      if (playback && typeof playback.catch === 'function') playback.catch(probarOtraRuta);
+    } catch (e) { probarOtraRuta(); }
   }
 
-  // Paso 1: Lina reproduce la voz humana (M4A) y luego da el turno al niño.
+  // Paso 1: Luna reproduce la voz humana (M4A) y luego da el turno al niño.
   function ejecutarModoEcoLinea(index) {
     if (!echoActive || echoPaused) return;
     if (index >= echoLines.length) {
@@ -2051,7 +2163,7 @@
     echoPointer = start;
     echoHelps = {};
     renderizarTextoLinea(start, end);
-    setStatus('👩‍🏫 Escucha a Lina leer esta frase...', '');
+    setStatus('👩‍🏫 Escucha a Luna leer esta frase...', '');
 
     // Audio humano pregrabado para Tito; para otros cuentos, TTS y luego respaldo visual.
     const sentenceText = allSpans.slice(start, end + 1).map(span => span.textContent.replace(/[-–—]/g, '')).join(' ');
@@ -2059,7 +2171,7 @@
       if (!echoActive || echoPaused || token !== echoToken) return;
       reproducirAudioOracion(index, start, end, sentenceText, token);
     };
-    reproducirVozHumanaLina('modeladoIntro', 'Escucha con atención cómo leo esta frase:', playSentence);
+    reproducirVozHumanaLuna('modeladoIntro', 'Escucha con atención cómo leo esta frase:', playSentence);
   }
 
   // Pasos 2 y 3: turno del niño con el micrófono activo
@@ -2075,7 +2187,7 @@
     stats.segmentStart = Date.now();
     stats.lastAdvanceAt = null;
     stats.pendingUnmatched = false;
-    reproducirVozHumanaLina('tuTurno', '¡Tu turno! Haz el eco y lee en voz alta.', () => {
+    reproducirVozHumanaLuna('tuTurno', '¡Tu turno! Haz el eco y lee en voz alta.', () => {
       if (!echoActive || echoPaused || echoTokenForTurn !== echoToken) return;
       if (!touchModeActive) {
         echoMicOn();
@@ -2112,7 +2224,7 @@
     if (!echoActive || echoPaused || touchModeActive || estadoTurno !== 'WAITING_CHILD') return;
     if (ltmStage === 0) ltmStartedAt = Date.now();
     const tiempos = PERFIL_TIEMPOS[perfilLectura || 'silabica'];
-    const hitos = [tiempos.visual, tiempos.fonetica, tiempos.modelado];
+    const hitos = [tiempos.visual, tiempos.fonetica, tiempos.modelado, tiempos.modelado + 8000];
     const idx = obtenerSiguientePalabraNoLeida();
     if (idx < 0 || ltmStage >= hitos.length) return;
     const limite = hitos[ltmStage];
@@ -2123,32 +2235,44 @@
         allSpans[idx].classList.add('ltm-visual-cue');
         stats.helpWords.add(idx);
         estadoTurno = 'HELPING';
-        setStatus('Pista visual: mira la palabra y tómate tu tiempo.', 'info');
-        reproducirVozHumanaLina('pistaVisual', 'Lina te escucha con atención... Tómate tu tiempo.', () => {
+        setStatus('Tómate tu tiempo. Mira la palabra resaltada; tú puedes.', 'info');
+        reproducirVozHumanaLuna('pistaVisual', 'Luna te escucha con atención... Tómate tu tiempo.', () => {
           if (!echoActive || echoPaused || obtenerSiguientePalabraNoLeida() !== idx) return;
           estadoTurno = 'WAITING_CHILD';
           iniciarTemporizadorEspera();
+          echoMicOn();
         });
       } else if (stage === 1) {
         const silaba = obtenerPrimeraSilaba(displayWord(idx));
         setStatus(`Pista fonética: empieza con «${silaba}…»`, '');
         estadoTurno = 'HELPING';
-        reproducirVozHumanaLina('pistaFoneticaIntro', `Esa palabra empieza con... ${silaba}`, () => {
+        reproducirVozHumanaLuna('pistaFoneticaIntro', `Esa palabra empieza con... ${silaba}`, () => {
           if (!echoActive || echoPaused) return;
-          hablarLina(`${silaba}...`, () => {
+          hablarLuna(`${silaba}...`, () => {
             if (!echoActive || echoPaused) return;
             estadoTurno = 'WAITING_CHILD';
             iniciarTemporizadorEspera();
             echoMicOn();
           });
         });
+      } else if (stage >= 3) {
+        // Apoyo físico parcial: se ofrece el modo táctil sin quitar la opción de seguir hablando.
+        document.getElementById('btnTouchMode').hidden = false;
+        setStatus('Si quieres, toca el botón 👆 Modo táctil y avanza tocando cada palabra. También puedes seguir leyendo en voz alta.', 'info');
       } else {
         const palabra = displayWord(idx);
-        setStatus(`Lina modela la palabra: «${palabra}». Intenta leerla.`, '');
+        const targetWord = allSpans[idx];
+        targetWord.classList.add('luna-point-cue');
+        document.querySelectorAll('.tutor-portrait, .welcome-portrait').forEach(el => el.classList.add('luna-gesture'));
+        setTimeout(() => {
+          targetWord.classList.remove('luna-point-cue');
+          document.querySelectorAll('.tutor-portrait, .welcome-portrait').forEach(el => el.classList.remove('luna-gesture'));
+        }, 2600);
+        setStatus(`Luna modela la palabra: «${palabra}». Intenta leerla.`, '');
         estadoTurno = 'HELPING';
-        reproducirVozHumanaLina('pistaModeladoIntro', `La palabra es... ${palabra}. Inténtalo cuando estés listo.`, () => {
+        reproducirVozHumanaLuna('pistaModeladoIntro', `La palabra es... ${palabra}. Inténtalo cuando estés listo.`, () => {
           if (!echoActive || echoPaused) return;
-          hablarLina(`${palabra}. Inténtalo cuando estés listo.`, () => {
+          hablarLuna(`${palabra}. Inténtalo cuando estés listo.`, () => {
             if (!echoActive || echoPaused) return;
             estadoTurno = 'WAITING_CHILD';
             iniciarTemporizadorEspera();
@@ -2159,8 +2283,8 @@
     }, Math.max(0, limite - (Date.now() - ltmStartedAt)));
   }
 
-  // Lina dice la palabra; el micrófono se apaga mientras suena y se reanuda al terminar
-  function hablarAyudaLina(texto, callback) {
+  // Luna dice la palabra; el micrófono se apaga mientras suena y se reanuda al terminar
+  function hablarAyudaLuna(texto, callback) {
     const token = echoToken;
     echoMicOff();
     speakText(texto, () => {
@@ -2331,7 +2455,7 @@
     echoActive = false;
     echoPaused = false;
     detenerAudioOracion();
-    detenerVozHumanaLina();
+    detenerVozHumanaLuna();
     echoToken++;
     estadoTurno = 'IDLE';
     clearTimeout(temporizadorInactividad);
@@ -2357,9 +2481,9 @@
   function iniciarExperiencia() {
     const startButton = document.getElementById('btnIniciarApp');
     startButton.disabled = true;
-    setStatus('¡Hola! Soy Lina, tu tutora de lectura. Vamos a leer juntos.', 'info');
-    const welcome = '¡Hola! Soy Lina, tu tutora de lectura. Hoy leeremos un cuento muy divertido. Primero yo leeré una frase para mostrarte cómo suena, y luego tú la repetirás como mi eco. Si te trabas, no te preocupes: yo te ayudaré. ¿Empezamos?';
-    reproducirVozHumanaLina('bienvenida', welcome, () => {
+    setStatus('¡Hola! Soy Luna, tu tutora de lectura. Vamos a leer juntos.', 'info');
+    const welcome = '¡Hola! Soy Luna, tu tutora de lectura. Hoy leeremos un cuento muy divertido. Primero yo leeré una frase para mostrarte cómo suena, y luego tú la repetirás como mi eco. Si te trabas, no te preocupes: yo te ayudaré. ¿Empezamos?';
+    reproducirVozHumanaLuna('bienvenida', welcome, () => {
       profileOptions.hidden = false;
       setStatus('Elige tu nivel de lectura para comenzar.', 'info');
     });
@@ -2447,17 +2571,27 @@
     document.getElementById('practiceProgress').textContent = `Palabra ${wordPracticeIndex + 1} de ${wordPracticeList.length}: escucha y repite.`;
     wordPracticePrompting = true;
     if (recognition) { try { recognition.stop(); } catch (e) {} }
-    speakText(`Repite: ${word}`, () => {
-      wordPracticePrompting = false;
-      iniciarMicrofonoPractica();
+    reproducirVozHumanaLuna('practicaIntro', 'Hoy vamos a practicar con estas palabras. Repite conmigo:', () => {
+      hablarLuna(word, () => {
+        wordPracticePrompting = false;
+        iniciarMicrofonoPractica();
+      });
     });
   }
   let wordPracticeEndsAt = 0;
   function avanzarPracticaPalabra() {
-    if (!wordPracticeActive) return;
-    wordPracticeIndex++;
-    document.getElementById('practiceProgress').textContent = '¡Muy bien!';
-    pedirPalabraPractica();
+    if (!wordPracticeActive || wordPracticePrompting) return;
+    const acertada = wordPracticeList[wordPracticeIndex];
+    wordPracticePrompting = true;
+    if (recognition) { try { recognition.stop(); } catch (e) {} }
+    otorgarEstrellas(2);
+    setStatus(`¡Muy bien! Dijiste «${acertada}». Ganaste 2 estrellas.`, 'success');
+    document.getElementById('practiceProgress').textContent = `¡Muy bien! «${acertada}»`;
+    reproducirVozHumanaLuna('muyBien', '¡Muy bien!', () => {
+      wordPracticeIndex++;
+      wordPracticePrompting = false;
+      pedirPalabraPractica();
+    });
   }
   function finalizarPracticaPalabras() {
     wordPracticeActive = false;
@@ -2465,8 +2599,9 @@
     clearTimeout(wordPracticeTimer);
     if (recognition) { try { recognition.stop(); } catch (e) {} }
     document.getElementById('practiceProgress').textContent = `¡Práctica terminada! Repasaste ${Math.min(wordPracticeIndex, wordPracticeList.length)} palabra(s).`;
+    detenerVozHumanaLuna();
     document.getElementById('btnPracticeWords').disabled = false;
-    speakText('¡Excelente práctica! Cada vez lees mejor.');
+    reproducirVozHumanaLuna('muyBien', '¡Excelente práctica! Cada vez lees mejor.');
   }
   document.getElementById('btnPracticeWords').addEventListener('click', () => {
     if (!recognition || !wordPracticeList.length) return;
@@ -2492,7 +2627,7 @@
       clearTimeout(temporizadorInactividad);
       echoToken++;
       detenerAudioOracion();
-      detenerVozHumanaLina();
+      detenerVozHumanaLuna();
       if (synth) synth.cancel();
       if (recognition) { try { recognition.stop(); } catch (e) {} }
       echoMicRunning = false;
@@ -2527,7 +2662,18 @@
   document.getElementById('btnTouchMode').addEventListener('click', () => {
     touchModeActive = true;
     document.getElementById('btnTouchMode').setAttribute('aria-pressed', 'true');
-    setStatus('Modo táctil activado. Lina leerá cada frase y tú tocarás las palabras en orden.', 'info');
+    if (echoActive) {
+      // Cambio en caliente: se apaga el micrófono y el niño avanza tocando la palabra resaltada.
+      clearTimeout(temporizadorInactividad);
+      echoMicOff();
+      ltmStage = 0;
+      if (estadoTurno === 'WAITING_CHILD') {
+        echoFocus();
+        setStatus('👆 Modo táctil: toca la palabra resaltada y sigue en orden.', 'info');
+      }
+      return;
+    }
+    setStatus('Modo táctil activado. Luna leerá cada frase y tú tocarás las palabras en orden.', 'info');
     startEcho();
   });
 
@@ -2580,7 +2726,16 @@
     }
   });
 
-  document.getElementById('btnClose').addEventListener('click', hideReport);
+  document.getElementById('btnClose').addEventListener('click', () => {
+    wordPracticeActive = false;
+    wordPracticePrompting = false;
+    clearTimeout(wordPracticeTimer);
+    if (recognition) { try { recognition.stop(); } catch (e) {} }
+    reproducirVozHumanaLuna('despedidaFinal', '¡Lo hiciste muy bien, mañana volveremos a leer!', () => {
+      setStatus('¡Lo hiciste muy bien, mañana volveremos a leer!', 'celebrate');
+      hideReport();
+    });
+  });
   document.getElementById('btnAgain').addEventListener('click', () => {
     hideReport();
     lineaActualIndex = 0;
@@ -2591,6 +2746,16 @@
   if (synth && typeof synth.onvoiceschanged !== 'undefined') {
     synth.onvoiceschanged = () => {};
   }
+
+  // Si el PNG externo falta, conserva un avatar lunar visible y accesible.
+  ['tutorImg', 'welcomeTutorImg'].forEach(id => {
+    const image = document.getElementById(id);
+    image.addEventListener('error', () => {
+      image.hidden = true;
+      const fallback = image.nextElementSibling;
+      if (fallback) fallback.hidden = false;
+    }, { once: true });
+  });
 
   // ===== Inicialización =====
   resetStats();
