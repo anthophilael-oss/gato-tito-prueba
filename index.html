@@ -708,6 +708,21 @@
     'audio/gato-tito/oracion_4.m4a',
     'audio/gato-tito/oracion_5.m4a'
   ];
+  // Locuciones humanas opcionales descritas en el guion adjunto. Si faltan, se usa speechSynthesis.
+  const AUDIOS_LINA = {
+    bienvenida: 'audios/fase1_bienvenida.m4a',
+    modeladoIntro: 'audios/fase2_modelado_intro.m4a',
+    tuTurno: 'audios/fase3_tu_turno.m4a',
+    pistaVisual: 'audios/fase5_pista_visual.m4a',
+    pistaFoneticaIntro: 'audios/fase5_pista_fonetica_intro.m4a',
+    pistaModeladoIntro: 'audios/fase5_modelado_intro.m4a',
+    phraseDrill: 'audios/fase5_phrase_drill.m4a',
+    celebracion: 'audios/fase6_celebracion.m4a',
+    preguntaIntro: 'audios/fase6_pregunta_intro.m4a'
+  };
+  let audioLinaActual = null;
+  let tokenAudioLina = 0;
+  let temporizadorAudioLina = null;
   let wordPracticeActive = false;
   let wordPracticePrompting = false;
   let wordPracticeList = [];
@@ -873,6 +888,7 @@
     clearTimeout(temporizadorInactividad);
 
     detenerAudioOracion();
+    detenerVozHumanaLina();
     currentStoryObject = cuentoObjeto;
     currentStoryTitle = cuentoObjeto.titulo || 'Lectura nueva';
     storyParagraphs = cuentoObjeto.frases.filter(Boolean);
@@ -932,9 +948,88 @@
     synth.speak(u);
   }
 
+  // Detiene una locución MP3 activa e invalida sus callbacks para evitar arranques tardíos.
+  function detenerVozHumanaLina() {
+    tokenAudioLina++;
+    clearTimeout(temporizadorAudioLina);
+    temporizadorAudioLina = null;
+    if (audioLinaActual) {
+      const previous = audioLinaActual;
+      audioLinaActual = null;
+      previous.onended = previous.onerror = previous.onstalled = null;
+      try { previous.pause(); previous.currentTime = 0; } catch (e) {}
+    }
+  }
+
+  /**
+   * Reproduce una locución grabada, deteniendo el ASR. Si el MP3 falta o no puede sonar,
+   * la reproduce con síntesis de voz; al terminar ejecuta callback y restaura el micrófono
+   * solo si el flujo de lectura continúa esperando al estudiante.
+   */
+  function reproducirVozHumanaLina(clave, textoRespaldo, callback) {
+    detenerVozHumanaLina();
+    const token = tokenAudioLina;
+    const wasListening = isListening;
+    const wasEcho = echoActive;
+    if (wasEcho) echoMicOff();
+    else if (wasListening && recognition) {
+      isPausedForTTS = true;
+      clearTimeout(hesitationTimer);
+      try { recognition.stop(); } catch (e) {}
+    }
+    if (synth) synth.cancel();
+
+    let settled = false;
+    let fallbackStarted = false;
+    const finish = () => {
+      if (settled || token !== tokenAudioLina) return;
+      settled = true;
+      clearTimeout(temporizadorAudioLina);
+      temporizadorAudioLina = null;
+      audioLinaActual = null;
+      if (callback) callback();
+      if (echoActive && !echoPaused && estadoTurno === 'WAITING_CHILD') echoMicOn();
+      else if (wasListening && isListening && !echoActive && recognition) {
+        isPausedForTTS = false;
+        consumedPerResult = {};
+        try { lastRestartAt = Date.now(); recognition.start(); } catch (e) {}
+      }
+    };
+    const useTTS = () => {
+      if (settled || fallbackStarted || token !== tokenAudioLina) return;
+      fallbackStarted = true;
+      clearTimeout(temporizadorAudioLina);
+      temporizadorAudioLina = null;
+      const audio = audioLinaActual;
+      audioLinaActual = null;
+      if (audio) {
+        audio.onended = audio.onerror = audio.onstalled = null;
+        try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+      }
+      if (synth && typeof SpeechSynthesisUtterance !== 'undefined') speakText(textoRespaldo, finish);
+      else finish();
+    };
+
+    const path = AUDIOS_LINA[clave];
+    if (!path || typeof Audio === 'undefined') { useTTS(); return; }
+    const audio = new Audio(path);
+    audioLinaActual = audio;
+    audio.preload = 'auto';
+    audio.onended = finish;
+    audio.onerror = useTTS;
+    audio.onstalled = useTTS;
+    // Si la ruta no responde, no bloquea el paso de fase.
+    temporizadorAudioLina = setTimeout(useTTS, 15000);
+    try {
+      const result = audio.play();
+      if (result && typeof result.catch === 'function') result.catch(useTTS);
+    } catch (e) { useTTS(); }
+  }
+
   // Lina habla. Si el micrófono está activo, se pausa mientras suena la voz y se reanuda al terminar,
   // así no escucha el altavoz ni marca palabras por error.
   function hablarLina(texto, callback) {
+    detenerVozHumanaLina();
     if (!synth) {
       if (callback) callback();
       return;
@@ -996,6 +1091,7 @@
     }
     if (echoActive) stopEcho(false);
     stopListening();
+    detenerVozHumanaLina();
     synth.cancel();
     isNarrating = true;
     btnReadAll.classList.add('speaking');
@@ -1070,6 +1166,7 @@
   }
 
   function stopNarration() {
+    detenerVozHumanaLina();
     if (synth) synth.cancel();
     finishNarrationUI();
   }
@@ -1351,7 +1448,9 @@
 
     const frase = allSpans.slice(s, e + 1).map(w => w.textContent).join(' ').replace(/[-–—]/g, ' ');
     setStatus('🔁 Vamos a releer esta frase juntas. Escucha a Lina y léela otra vez.', 'warn');
-    hablarLina('Vamos a releer esta frase juntas. ' + frase);
+    reproducirVozHumanaLina('phraseDrill', '¡Muy bien! Ahora volvamos a leer la frase completa.', () => {
+      if (drill && synth) hablarLina(frase);
+    });
     return true;
   }
 
@@ -1524,7 +1623,9 @@
     document.getElementById('sessionPraise').textContent = palabrasConAyuda.length
       ? '¡Lo hiciste excelente! Cada día lees mejor.'
       : '¡Leíste con mucha fluidez y sin detenerte!';
-    hablarLina(saludo);
+    reproducirVozHumanaLina('celebracion', saludo, () => {
+      reproducirVozHumanaLina('preguntaIntro', 'Cuéntame: ¿Qué fue lo que más te gustó de esta historia?');
+    });
   }
 
   // ===== Fin de la lectura: reporte y comprensión =====
@@ -1656,6 +1757,7 @@
 
   function hideReport() {
     reportEl.classList.remove('show');
+    detenerVozHumanaLina();
     if (synth) synth.cancel();
   }
 
@@ -1680,6 +1782,7 @@
   async function startListening() {
     if (echoActive) stopEcho(false);
     if (!recognition || isListening) return;
+    detenerVozHumanaLina();
     setStatus('Acepta el permiso del micrófono cuando el navegador te lo pida.', '');
     const ok = await ensureMic();
     if (!ok || isListening) return;
@@ -1952,8 +2055,11 @@
 
     // Audio humano pregrabado para Tito; para otros cuentos, TTS y luego respaldo visual.
     const sentenceText = allSpans.slice(start, end + 1).map(span => span.textContent.replace(/[-–—]/g, '')).join(' ');
-    synth?.cancel();
-    reproducirAudioOracion(index, start, end, sentenceText, token);
+    const playSentence = () => {
+      if (!echoActive || echoPaused || token !== echoToken) return;
+      reproducirAudioOracion(index, start, end, sentenceText, token);
+    };
+    reproducirVozHumanaLina('modeladoIntro', 'Escucha con atención cómo leo esta frase:', playSentence);
   }
 
   // Pasos 2 y 3: turno del niño con el micrófono activo
@@ -1963,15 +2069,19 @@
     limpiarResaltadoPalabras();
     echoFocus();
     btnEcho.classList.add('turn'); // indicador verde solo durante el turno del niño
-    setStatus(touchModeActive ? '👆 Tu turno: toca cada palabra en orden para avanzar.' : '🎤 ¡Tu turno! Lee la frase en voz alta...', '');
+    const echoTokenForTurn = echoToken;
+    setStatus(touchModeActive ? '👆 Tu turno: toca cada palabra en orden para avanzar.' : '🎤 ¡Tu turno! Lee la frase en voz alta...', 'success');
 
     stats.segmentStart = Date.now();
     stats.lastAdvanceAt = null;
     stats.pendingUnmatched = false;
-    if (!touchModeActive) {
-      echoMicOn();
-      iniciarTemporizadorEspera();
-    }
+    reproducirVozHumanaLina('tuTurno', '¡Tu turno! Haz el eco y lee en voz alta.', () => {
+      if (!echoActive || echoPaused || echoTokenForTurn !== echoToken) return;
+      if (!touchModeActive) {
+        echoMicOn();
+        iniciarTemporizadorEspera();
+      }
+    });
   }
 
   function avanzarPalabraPorToque(index) {
@@ -2012,23 +2122,38 @@
       if (stage === 0) {
         allSpans[idx].classList.add('ltm-visual-cue');
         stats.helpWords.add(idx);
-        setStatus('Pista visual: mira la palabra y tómate tu tiempo.', '');
-        iniciarTemporizadorEspera();
+        estadoTurno = 'HELPING';
+        setStatus('Pista visual: mira la palabra y tómate tu tiempo.', 'info');
+        reproducirVozHumanaLina('pistaVisual', 'Lina te escucha con atención... Tómate tu tiempo.', () => {
+          if (!echoActive || echoPaused || obtenerSiguientePalabraNoLeida() !== idx) return;
+          estadoTurno = 'WAITING_CHILD';
+          iniciarTemporizadorEspera();
+        });
       } else if (stage === 1) {
         const silaba = obtenerPrimeraSilaba(displayWord(idx));
         setStatus(`Pista fonética: empieza con «${silaba}…»`, '');
         estadoTurno = 'HELPING';
-        hablarAyudaLina(`Empieza con ${silaba}...`, () => {
-          estadoTurno = 'WAITING_CHILD';
-          iniciarTemporizadorEspera();
+        reproducirVozHumanaLina('pistaFoneticaIntro', `Esa palabra empieza con... ${silaba}`, () => {
+          if (!echoActive || echoPaused) return;
+          hablarLina(`${silaba}...`, () => {
+            if (!echoActive || echoPaused) return;
+            estadoTurno = 'WAITING_CHILD';
+            iniciarTemporizadorEspera();
+            echoMicOn();
+          });
         });
       } else {
         const palabra = displayWord(idx);
         setStatus(`Lina modela la palabra: «${palabra}». Intenta leerla.`, '');
         estadoTurno = 'HELPING';
-        hablarAyudaLina(`${palabra}. Inténtalo cuando estés listo.`, () => {
-          estadoTurno = 'WAITING_CHILD';
-          iniciarTemporizadorEspera();
+        reproducirVozHumanaLina('pistaModeladoIntro', `La palabra es... ${palabra}. Inténtalo cuando estés listo.`, () => {
+          if (!echoActive || echoPaused) return;
+          hablarLina(`${palabra}. Inténtalo cuando estés listo.`, () => {
+            if (!echoActive || echoPaused) return;
+            estadoTurno = 'WAITING_CHILD';
+            iniciarTemporizadorEspera();
+            echoMicOn();
+          });
         });
       }
     }, Math.max(0, limite - (Date.now() - ltmStartedAt)));
@@ -2206,6 +2331,7 @@
     echoActive = false;
     echoPaused = false;
     detenerAudioOracion();
+    detenerVozHumanaLina();
     echoToken++;
     estadoTurno = 'IDLE';
     clearTimeout(temporizadorInactividad);
@@ -2232,8 +2358,8 @@
     const startButton = document.getElementById('btnIniciarApp');
     startButton.disabled = true;
     setStatus('¡Hola! Soy Lina, tu tutora de lectura. Vamos a leer juntos.', 'info');
-    hablarLina('¡Hola! Soy Lina, tu tutora de lectura. Vamos a leer juntos.', () => {
-      console.log('Audio desbloqueado correctamente');
+    const welcome = '¡Hola! Soy Lina, tu tutora de lectura. Hoy leeremos un cuento muy divertido. Primero yo leeré una frase para mostrarte cómo suena, y luego tú la repetirás como mi eco. Si te trabas, no te preocupes: yo te ayudaré. ¿Empezamos?';
+    reproducirVozHumanaLina('bienvenida', welcome, () => {
       profileOptions.hidden = false;
       setStatus('Elige tu nivel de lectura para comenzar.', 'info');
     });
@@ -2366,6 +2492,7 @@
       clearTimeout(temporizadorInactividad);
       echoToken++;
       detenerAudioOracion();
+      detenerVozHumanaLina();
       if (synth) synth.cancel();
       if (recognition) { try { recognition.stop(); } catch (e) {} }
       echoMicRunning = false;
