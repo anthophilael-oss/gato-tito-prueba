@@ -475,6 +475,50 @@
       100% { box-shadow: 0 0 0 0 rgba(255, 123, 123, 0); }
     }
 
+
+    /* ===== Pantalla única sin scroll: Luna (imagen) + solo la frase que se lee ===== */
+    :root { --reading-font-size: 30px; }
+    /* El cuadro de diálogo ya no se ve; el texto queda solo para lectores de pantalla y lo dice Luna en voz alta. */
+    #statusBanner {
+      position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important;
+      clip-path: inset(50%) !important; margin: 0 !important; padding: 0 !important; border: 0 !important;
+      box-shadow: none !important; white-space: nowrap;
+    }
+    .luna-stage { flex: none; display: flex; justify-content: center; margin: 0 0 6px; }
+    .luna-portrait {
+      width: clamp(96px, 18dvh, 150px); aspect-ratio: 1; border-radius: 50%;
+      border: 4px solid #3B82F6; overflow: hidden; background: #EAF4FF;
+      box-shadow: 0 6px 16px rgba(59, 130, 246, .25);
+    }
+    .luna-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .luna-portrait img[hidden] { display: none; }
+    .luna-portrait .tutor-fallback { font-size: 3rem; font-weight: 700; color: #1E3A8A; }
+    .header { padding-bottom: 6px; margin-bottom: 6px; }
+    .reading-tools { margin-bottom: 6px; }
+    .story-title { margin-bottom: 4px; font-size: 1.1rem; }
+    #textContainer {
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 12px 16px; margin-bottom: 8px; overflow-y: auto;
+    }
+    #textContainer .sentence { display: none; width: 100%; margin: 0; padding: 0; border: 0; }
+    #textContainer .sentence.active-line { display: block; background: none; outline: none; }
+    .controls { gap: 8px; }
+    .controls button { padding: 10px 18px; font-size: 16px; }
+    .controls .calm-toggle { position: static; box-shadow: none; padding: 8px 14px; font-size: 14px; }
+    @media (max-height: 640px) { .story-title { display: none; } .luna-portrait { width: 84px; } }
+    @media (max-width: 520px) {
+      :root { --reading-font-size: 26px; }
+      .header { gap: 6px; }
+      .stars-box { font-size: 17px; padding: 4px 12px; }
+      .story-picker { margin: 0; font-size: 14px; }
+      .story-picker select { padding: 4px 8px; max-width: 190px; }
+      .header-actions { gap: 6px; justify-content: center; }
+      .header-actions button { padding: 5px 10px; font-size: 13px; }
+      .controls button { padding: 8px 12px; font-size: 14px; }
+      .echo-limit { font-size: 13px; }
+      .reading-tools button, .reading-tools select { padding: 5px 8px; font-size: 14px; }
+    }
+
     @page { size: A4 portrait; margin: 16mm; }
     @media print {
       html, body { height:auto !important; min-height:0 !important; overflow:visible !important; background:#fff !important; padding:0 !important; display:block !important; }
@@ -510,12 +554,6 @@
   <div class="header">
     <!-- Espacio para el logo: guarda tu imagen como "logo.png" junto a este archivo -->
     <div class="logo-slot"><img class="app-logo" src="logo.png" alt="Logo" onerror="this.hidden=true"></div>
-    <div class="tutor">
-      <div>
-        <div class="tutor-label">Tutora virtual</div>
-        <div class="tutor-name">Luna</div>
-      </div>
-    </div>
     <div class="stars-box">Estrellas: <span id="stars">0</span></div>
     <div class="header-actions">
       <label class="story-picker" for="storySelect">Cuento:
@@ -530,7 +568,7 @@
     <div class="logo-slot welcome-logo"><img class="app-logo" src="logo.png" alt="Logo" onerror="this.hidden=true"></div>
     <section class="wstep" id="stepWelcome">
       <div class="welcome-portrait">
-        <img id="welcomeTutorImg" src="tutora_luna.png" alt="Luna, tu tutora virtual de lectura">
+        <img id="welcomeTutorImg" src="tutora_luna.png" alt="Luna, tu tutora virtual de lectura" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
         <span class="tutor-fallback" hidden aria-hidden="true">L</span>
       </div>
       <h1 id="profileTitle">¡Hola! Soy Luna</h1>
@@ -577,6 +615,13 @@
       </div>
       <button type="button" class="wback" data-back="stepStory">Volver</button>
     </section>
+  </div>
+
+  <div class="luna-stage">
+    <div class="luna-portrait tutor-portrait">
+      <img id="lunaImg" src="tutora_luna.png" alt="Luna, tu tutora virtual de lectura" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+      <span class="tutor-fallback" hidden aria-hidden="true">L</span>
+    </div>
   </div>
 
   <div class="status-banner" id="statusBanner" role="status" aria-live="polite" aria-atomic="true">
@@ -862,12 +907,15 @@
     return allSpans[index].textContent.replace(PUNCT_REGEX, '').trim();
   }
 
-  function setStatus(message, type = 'info') {
+  // El mensaje ya no se muestra en un cuadro: Luna lo dice (voz=true) y queda oculto para lectores de pantalla.
+  function setStatus(message, type = 'info', voz = false) {
     const banner = document.getElementById('statusBanner');
     const statusText = document.getElementById('statusText');
-    if (!banner || !statusText) return;
-    statusText.textContent = message;
-    banner.className = 'status-banner ' + (type || 'info');
+    if (banner && statusText) {
+      statusText.textContent = message;
+      banner.className = 'status-banner ' + (type || 'info');
+    }
+    if (voz) hablarLuna(message);
   }
 
   // ===== Indicadores de lectura (profiling) =====
@@ -976,6 +1024,9 @@
       p.dataset.endWord = String(globalIndex - 1);
       textContainer.appendChild(p);
     });
+    // Solo se ve una frase a la vez: al cargar, la primera.
+    const primera = textContainer.querySelector('.sentence');
+    if (primera) primera.classList.add('active-line');
   }
 
   // ===== Carga de cuento sin perder la estructura de la aplicación =====
@@ -1268,7 +1319,6 @@
     narrationActiveIndex = index;
     if (index >= 0 && allSpans[index]) {
       allSpans[index].classList.add('active');
-      allSpans[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
@@ -1290,7 +1340,7 @@
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setStatus('Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Microsoft Edge para leer con Luna. Aún puedes tocar las palabras y escuchar el cuento.', 'warn');
+      setStatus('Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Microsoft Edge para leer con Luna. Aún puedes tocar las palabras y escuchar el cuento.', 'warn', true);
       btnListen.disabled = true;
       document.getElementById('btnTouchMode').hidden = false;
       return;
@@ -1335,14 +1385,14 @@
         stopListening();
         stopEcho(false);
         document.getElementById('btnTouchMode').hidden = false;
-        setStatus('No hay permiso para el micrófono. Puedes continuar con Modo táctil / lectura por toque.', 'warn');
+        setStatus('No hay permiso para el micrófono. Puedes continuar con Modo táctil / lectura por toque.', 'warn', true);
         return;
       }
       if (event.error === 'audio-capture') {
         stopListening();
         stopEcho(false);
         document.getElementById('btnTouchMode').hidden = false;
-        setStatus('No encuentro un micrófono. Puedes continuar con Modo táctil / lectura por toque.', 'warn');
+        setStatus('No encuentro un micrófono. Puedes continuar con Modo táctil / lectura por toque.', 'warn', true);
         return;
       }
       console.warn('Error de reconocimiento:', event.error);
@@ -1401,7 +1451,6 @@
     if (currentWordIndex < allSpans.length) {
       const el = allSpans[currentWordIndex];
       el.classList.add('active');
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
@@ -2043,7 +2092,6 @@
       allSpans[i].classList.remove('read', 'ltm-visual-cue', 'omitted', 'active');
       allSpans[i].classList.add('in-line');
     }
-    allSpans[start].scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   function echoFocus() {
@@ -2426,9 +2474,10 @@
     setStatus('¡Excelente repetición! Vamos con la siguiente frase.', 'celebrate');
 
     const token = ++echoToken;
-    setTimeout(() => {
+    const siguiente = () => setTimeout(() => {
       if (echoActive && !echoPaused && token === echoToken) ejecutarModoEcoLinea(lineaActualIndex + 1);
-    }, 1500);
+    }, 400);
+    reproducirVozHumanaLuna('muyBien', '¡Muy bien!', siguiente);
   }
 
   // Fin de la sesión (límite de frases por edad)
@@ -2450,7 +2499,7 @@
     if (echoActive) return;
     if (!recognition && !touchModeActive) {
       document.getElementById('btnTouchMode').hidden = false;
-      setStatus('No está disponible el reconocimiento de voz. Puedes seguir con lectura por toque.', 'warn');
+      setStatus('No está disponible el reconocimiento de voz. Puedes seguir con lectura por toque.', 'warn', true);
       return;
     }
     stopListening();
@@ -2461,7 +2510,7 @@
     if (!ok || echoActive) {
       if (!ok) {
         document.getElementById('btnTouchMode').hidden = false;
-        setStatus('Sin permiso de micrófono. Pulsa Modo táctil para leer por palabras.', 'warn');
+        setStatus('Sin permiso de micrófono. Pulsa Modo táctil para leer por palabras.', 'warn', true);
       }
       return;
     }
@@ -2522,7 +2571,7 @@
   }
 
   const profilePicker = document.getElementById('profilePicker');
-  const BEHIND_WELCOME = ['.header', '#statusBanner', '.reading-tools', '#story-title', '#textContainer', '.controls', '#report', '#btnCalmMode'];
+  const BEHIND_WELCOME = ['.header', '.luna-stage', '#statusBanner', '.reading-tools', '#story-title', '#textContainer', '.controls', '#report', '#btnCalmMode'];
   function setBehindWelcome(inertOn) {
     BEHIND_WELCOME.forEach(sel => { const el = document.querySelector(sel); if (el) el.inert = inertOn; });
   }
@@ -2550,7 +2599,7 @@
   }
   function iniciarExperiencia() {
     mostrarPaso('stepTools');
-    hablarLuna('Vamos a practicar. Toca cada botón.');
+    reproducirVozHumanaLuna('bienvenida', '¡Hola! Soy Luna, tu tutora de lectura. Vamos a leer juntos, con calma y a tu ritmo.');
   }
   function irAElegirCuento() {
     renderStoryOptions();
@@ -2759,7 +2808,7 @@
       }
       return;
     }
-    setStatus('Modo táctil activado. Luna leerá cada frase y tú tocarás las palabras en orden.', 'info');
+    setStatus('Modo táctil activado. Luna leerá cada frase y tú tocarás las palabras en orden.', 'info', true);
     startEcho();
   });
 
@@ -2769,7 +2818,7 @@
   });
 
   // Herramientas DUA de presentación visual.
-  let fontSizePx = 24;
+  let fontSizePx = 30;
   let comfortableLineSpacing = false;
   function sincronizarPractica() {
     const sample = document.getElementById('practiceSample');
@@ -2782,7 +2831,7 @@
     document.getElementById('pBtnEasy').setAttribute('aria-pressed', String(textContainer.classList.contains('easy-read')));
   }
   function cambiarTamano(delta) {
-    fontSizePx = Math.max(18, Math.min(36, fontSizePx + delta));
+    fontSizePx = Math.max(20, Math.min(44, fontSizePx + delta));
     textContainer.style.setProperty('--reading-font-size', `${fontSizePx}px`);
     sincronizarPractica();
   }
@@ -2815,6 +2864,7 @@
   document.getElementById('pBtnEasy').addEventListener('click', alternarLecturaFacil);
   document.getElementById('pTheme').addEventListener('change', e => cambiarFondo(e.target.value));
   sincronizarPractica();
+  document.querySelector('.controls').appendChild(document.getElementById('btnCalmMode'));
   document.getElementById('btnCalmMode').addEventListener('click', event => {
     calmModeActive = !calmModeActive;
     document.body.classList.toggle('calm-mode', calmModeActive);
@@ -2857,7 +2907,7 @@
   }
 
   // Si el PNG externo falta, conserva un avatar lunar visible y accesible.
-  ['welcomeTutorImg'].forEach(id => {
+  ['welcomeTutorImg', 'lunaImg'].forEach(id => {
     const image = document.getElementById(id);
     if (!image) return;
     const mostrarRespaldo = () => { image.hidden = true; const f = image.nextElementSibling; if (f) f.hidden = false; };
