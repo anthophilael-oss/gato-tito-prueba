@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lectura asistida - El gato Tito y el pez</title>
+  <style>
+    :root {
+      --bg: #FFF7F0;
+      --card: #FFFFFF;
+      --text: #3D4A5C;
+      --muted: #8A94A6;
+      --blue: #8EC5FC;
+      --blue-dark: #5BA4F0;
+      --mint: #B8F0D0;
+      --green: #4CC38A;
+      --peach: #FFD9B8;
+      --yellow: #FFE08A;
+      --orange: #FFB347;
+      --lilac: #E6DDFB;
+      --reading-bg: #F4F8FF;
+      --red: #FF7B7B;
+      --reading-font-size: 24px;
+      --reading-line-height: 1.8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif;
+      background: linear-gradient(160deg, var(--bg) 0%, #EAF4FF 100%);
+      color: var(--text);
+      margin: 0;
+      padding: 12px;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .container {
+      position: relative;
+      max-width: 780px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border-radius: 28px;
+      padding: 18px 24px;
+      box-shadow: 0 12px 36px rgba(120, 140, 180, 0.18);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-bottom: 3px dashed var(--lilac);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .tutor { display: flex; align-items: center; gap: 14px; }
+
+    .avatar {
+      font-size: 36px;
+      background: var(--lilac);
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .tutor-label { font-size: 14px; color: var(--muted); }
+    .tutor-name { font-size: 20px; font-weight: 700; color: var(--blue-dark); }
+
+    .stars-box {
+      font-size: 22px;
+      font-weight: 700;
+      background: var(--yellow);
+      color: #7A5A00;
+      padding: 8px 18px;
+      border-radius: 999px;
+    }
+
+    .profile-picker {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 28px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.97);
+      text-align: center;
+    }
+    .profile-picker h2 { color: var(--blue-dark); margin: 0; }
+    .profile-picker p { margin: 0 0 6px; }
+    .profile-picker button { max-width: 420px; justify-content: center; }
+    .profile-picker[hidden] { display: none; }
+    .profile-options { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+    .profile-options[hidden] { display: none; }
+    .story-picker { display: flex; align-items: center; gap: 8px; margin: 0 auto 10px; font-weight: 700; }
+    .story-picker select { font: inherit; padding: 8px 12px; border: 2px solid var(--lilac); border-radius: 12px; background: #fff; }
+    .header { position: relative; z-index: 21; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .header-actions button { padding: 8px 14px; font-size: 15px; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(28, 39, 58, .48); }
+    .modal-backdrop[hidden] { display: none; }
+    .modal-card { width: min(460px, 100%); max-height: 85vh; overflow: auto; background: #fff; border-radius: 24px; padding: 22px; box-shadow: 0 18px 55px rgba(20, 40, 70, .3); text-align: center; }
+    .modal-card h2 { margin: 0 0 10px; color: var(--blue-dark); }
+    .achievement-list { text-align: left; background: var(--reading-bg); border-radius: 16px; padding: 12px 18px; }
+    .achievement-list p { margin: 8px 0; }
+    .practice-box { border: 2px dashed #FBC02D; border-radius: 14px; padding: 12px; margin-top: 12px; background: #FFFDE7; }
+    #practiceProgress { min-height: 24px; font-weight: 700; color: #1E6B48; }
+    .confetti-layer { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+    .confetti-piece { position: absolute; top: -24px; width: 11px; height: 16px; opacity: .95; animation: confetti-fall 3.2s ease-in forwards; }
+    @keyframes confetti-fall { to { transform: translate3d(var(--drift), 110vh, 0) rotate(900deg); opacity: .15; } }
+    @media (prefers-reduced-motion: reduce) { .confetti-piece { animation-duration: .8s; } }
+
+    /* ===== Banner y texto de la tutora Lina ===== */
+    #statusBanner, .tutor-status {
+      text-align: center;
+      font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #2D3748;
+      background-color: #EBF8FF;
+      border: 3px solid #3182CE;
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin: 12px auto 16px;
+      max-width: 90%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    #statusBanner .tutor-avatar {
+      font-size: 2.2rem;
+      vertical-align: middle;
+      margin-right: 12px;
+    }
+    #statusBanner.warn { background-color: #FEFCBF; border-color: #D69E2E; color: #744210; }
+    #statusBanner.celebrate, #statusBanner.success { background-color: #C6F6D5; border-color: #38A169; color: #22543D; }
+    #statusBanner.info { background-color: #EBF8FF; border-color: #3182CE; color: #2D3748; }
+
+    .story-title {
+      margin: 0 0 8px;
+      text-align: center;
+      color: var(--blue-dark);
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .reading-box {
+      font-size: var(--reading-font-size);
+      line-height: var(--reading-line-height);
+      background: var(--reading-bg);
+      padding: 16px 20px;
+      border-radius: 20px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      margin-bottom: 14px;
+      word-wrap: break-word;
+    }
+
+    .reading-box p {
+      margin: 0 0 14px 0;
+      padding-bottom: 12px;
+      border-bottom: 2px dotted #D6E4FA;
+    }
+
+    .reading-box .sentence.active-line {
+      background: rgba(255, 224, 138, .28);
+      outline: 3px solid #B7791F;
+      outline-offset: 3px;
+      border-radius: 10px;
+    }
+    .reading-box p:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .word {
+      display: inline-block;
+      padding: 0 6px;
+      margin: 2px 1px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .word:hover { background-color: #DCE8FA; }
+    .reading-box.easy-read .word { letter-spacing: .08em; word-spacing: .18em; font-family: Verdana, Arial, sans-serif; }
+    .reading-box.comfortable-lines { --reading-line-height: 2.2; }
+    .reading-box.theme-cream { background: #FFF8E7; }
+    .reading-box.theme-mint { background: #E9F7EF; }
+    .reading-box.theme-sky { background: #EAF4FF; }
+    .reading-tools { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; margin:0 auto 8px; }
+    .reading-tools button, .reading-tools select { font:inherit; font-weight:700; border:2px solid #CBD5E1; border-radius:12px; padding:7px 10px; background:#fff; color:#243447; }
+    .reading-tools button[aria-pressed="true"] { outline:3px solid #1565C0; }
+    :focus-visible { outline:3px solid #1565C0 !important; outline-offset:3px; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    #btnTouchMode[hidden] { display:none; }
+    .calm-toggle { position:fixed; right:14px; bottom:14px; z-index:30; border-radius:999px; padding:10px 16px; background:#334155; color:#fff; box-shadow:0 4px 12px #0003; }
+    body.calm-mode *, body.calm-mode *::before, body.calm-mode *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+    body.calm-mode .confetti-layer { display:none; }
+    .report-student { display:flex; gap:8px; align-items:center; margin:10px 0; }
+    .report-student input { font:inherit; padding:6px; border:1px solid #64748B; border-radius:6px; }
+    .qualitative-summary { padding:10px; margin:10px 0; border:1px solid #94A3B8; border-radius:8px; }
+
+    /* Modo eco: solo se muestra la frase del turno actual. */
+    .word.in-line { background-color: #EFE9FD; }
+    .reading-box.echo .word:not(.in-line) { display: none; }
+
+    /* Resaltado de lectura activa (Normal) */
+    .word.active {
+      background-color: #E3F2FD;
+      color: #1565C0;
+      border-bottom: 2px solid #1565C0;
+    }
+
+    /* Nivel 2: Pista visual (amarillo suave, sin alarmas) */
+    .word.ltm-visual-cue {
+      background-color: #FFFDE7;
+      border-bottom: 2px dashed #FBC02D;
+      transition: all 0.5s ease;
+    }
+
+    /* Palabras ya leídas correctamente */
+    .word.read {
+      color: #2E7D32;
+      font-weight: 600;
+    }
+
+    /* Estado para palabras omitidas / saltadas */
+    .word.omitted {
+      background-color: #FFEAA7;
+      color: #D63031;
+      text-decoration: line-through;
+      font-weight: 600;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 12px 26px;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 14px rgba(100, 130, 180, 0.22);
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover { box-shadow: 0 8px 18px rgba(100, 130, 180, 0.3); }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* En esta versión solo se muestra el modo eco. */
+    #btnListen, #btnReadAll { display: none; }
+
+    .btn-mic { background: var(--blue); color: #14467A; }
+    .btn-mic.listening {
+      background: var(--red);
+      color: #FFFFFF;
+      animation: pulse-red 1.4s infinite;
+    }
+
+    .btn-model { background: var(--lilac); color: #4A3A8A; }
+    .btn-model.speaking { background: var(--peach); color: #8A4B0F; }
+
+    /* Modo eco: indicador verde (sin rojo) solo durante el turno del niño */
+    .btn-echo { background: var(--mint); color: #1E6B48; }
+    .btn-echo.turn {
+      background: var(--green);
+      color: #FFFFFF;
+      animation: pulse-green 1.4s infinite;
+    }
+
+    .echo-limit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .echo-limit select {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 2px solid var(--lilac);
+      background: #FFFFFF;
+      color: var(--text);
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(76, 195, 138, 0.5); }
+      70% { box-shadow: 0 0 0 16px rgba(76, 195, 138, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(76, 195, 138, 0); }
+    }
+
+    /* ===== Reporte final ===== */
+    .report {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      background: var(--card);
+      border-radius: 28px;
+      padding: 18px 22px;
+      overflow-y: auto;
+    }
+
+    .report.show { display: block; }
+
+    .report h2 { margin: 0 0 10px; font-size: 22px; color: var(--blue-dark); }
+    .report h3 { margin: 12px 0 6px; font-size: 16px; color: var(--text); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      background: var(--reading-bg);
+      border-radius: 14px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .session-summary {
+      padding: 16px;
+      margin: 10px 0 14px;
+      border: 2px solid #0284C7;
+      border-radius: 18px;
+      background: #F0F9FF;
+      text-align: center;
+    }
+    .session-summary h3 { color: #0369A1; margin: 0 0 6px; }
+    .session-summary p { margin: 6px 0; }
+    .session-summary #sessionStars { color: #D97706; font-size: 1.25rem; }
+    #sessionWords { margin-top: 8px; color: #78350F; font-weight: 700; }
+
+    .metric b { display: block; font-size: 22px; color: var(--blue-dark); }
+    .metric span { font-size: 12px; color: var(--muted); }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .chip {
+      background: var(--peach);
+      color: #8A4B0F;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .chip.good { background: var(--mint); color: #1E6B48; }
+
+    .question {
+      background: var(--reading-bg);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .question-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      font-weight: 700;
+    }
+
+    .options { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .option {
+      font-size: 15px;
+      padding: 8px 16px;
+      background: #FFFFFF;
+      color: var(--text);
+    }
+
+    .option.correct { background: var(--green); color: #FFFFFF; }
+    .option.wrong { background: var(--peach); color: #8A4B0F; }
+
+    .listen-q {
+      font-size: 14px;
+      padding: 4px 10px;
+      background: var(--lilac);
+      color: #4A3A8A;
+    }
+
+    .qresult { text-align: center; font-weight: 700; min-height: 22px; color: #1E6B48; }
+
+    .report-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(255, 123, 123, 0.5); }
+      70% { box-shadow: 0 0 0 16px rgba(255, 123, 123, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 123, 123, 0); }
+    }
+
+    @page { size: A4 portrait; margin: 16mm; }
+    @media print {
+      html, body { height:auto !important; min-height:0 !important; overflow:visible !important; background:#fff !important; padding:0 !important; display:block !important; }
+      body * { visibility:hidden !important; }
+      .container { position:static !important; width:auto !important; max-width:none !important; height:auto !important; padding:0 !important; margin:0 !important; display:block !important; overflow:visible !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#fff !important; }
+      #report, #report * { visibility:visible !important; }
+      #report { display:block !important; position:static !important; inset:auto !important; z-index:auto !important; width:100% !important; max-height:none !important; overflow:visible !important; padding:0 !important; border:0 !important; background:#fff !important; color:#111 !important; }
+      #report h2 { font-size:20pt; border-bottom:2px solid #222; padding-bottom:6pt; }
+      #report h3 { font-size:13pt; margin-top:12pt; }
+      .metrics { grid-template-columns:repeat(4, 1fr) !important; gap:5pt !important; }
+      .metric, .session-summary, .question, .qualitative-summary { break-inside:avoid; background:#fff !important; color:#111 !important; border:1px solid #777 !important; box-shadow:none !important; }
+      .report-actions, #btnPracticeWords, #practiceProgress { display:none !important; }
+      .report-student input { border:0; border-bottom:1px solid #333; border-radius:0; }
+      .chips { gap:4pt; }
+      .chip { border:1px solid #777 !important; background:#fff !important; color:#111 !important; }
+      .confetti-layer, .calm-toggle, .modal-backdrop { display:none !important; }
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 8px; }
+      .container { padding: 12px; }
+      .reading-box { font-size: 20px; }
+      .controls { gap: 8px; }
+      .controls button { flex: 1; justify-content: center; padding: 10px 12px; font-size: 15px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .echo-limit { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="tutor">
+      <div class="avatar">👩‍🏫</div>
+      <div>
+        <div class="tutor-label">Tutora virtual</div>
+        <div class="tutor-name">Lina</div>
+      </div>
+    </div>
+    <div class="stars-box">⭐ <span id="stars">0</span></div>
+    <div class="header-actions">
+      <label class="story-picker" for="storySelect">📚 Cuento:
+        <select id="storySelect" aria-label="Seleccionar cuento"></select>
+      </label>
+      <button id="btnAchievements" class="btn-model">🏆 Mis Logros</button>
+    </div>
+  </div>
+
+  <div class="profile-picker" id="profilePicker" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+    <h2 id="profileTitle">Elige tu nivel de lectura</h2>
+    <p>Lina ajustará el tiempo de espera y las pistas a tu ritmo.</p>
+    <button class="btn-mic" id="btnIniciarApp">🎙️ Iniciar Lectura con Lina</button>
+    <div class="profile-options" id="profileOptions" hidden>
+      <p>Ahora elige tu nivel de lectura:</p>
+      <button class="btn-echo" id="profileSyllabic">1.º/2.º Grado - Lectura Silábica</button>
+      <button class="btn-model" id="profileFluent">3.º Grado - Lectura Fluida</button>
+    </div>
+  </div>
+
+  <div class="status-banner" id="statusBanner" role="status" aria-live="polite" aria-atomic="true">
+    <span class="tutor-avatar" aria-hidden="true">👩‍🏫</span>
+    <span id="statusText">¡Hola! Soy Lina. Vamos a leer juntos a tu ritmo.</span>
+  </div>
+
+  <div class="reading-tools" role="group" aria-label="Herramientas de lectura accesible">
+    <button id="btnFontDown" type="button" aria-label="Reducir tamaño del texto">A−</button>
+    <button id="btnFontUp" type="button" aria-label="Aumentar tamaño del texto">A+</button>
+    <button id="btnLineSpacing" type="button" aria-pressed="false">Interlineado</button>
+    <button id="btnEasyRead" type="button" aria-pressed="false">Lectura fácil</button>
+    <label for="readingTheme">Fondo:</label>
+    <select id="readingTheme" aria-label="Color de fondo de lectura">
+      <option value="theme-cream">Crema</option><option value="theme-mint">Menta</option><option value="theme-sky" selected>Cielo</option>
+    </select>
+  </div>
+  <h2 id="story-title" class="story-title">El gato Tito y el pez</h2>
+  <div class="reading-box theme-sky" id="textContainer"></div>
+
+  <div class="controls">
+    <button id="btnListen" class="btn-mic">🎤 <span id="btnListenText">Empezar a leer</span></button>
+    <button id="btnReadAll" class="btn-model">🔊 <span id="btnReadAllText">Escuchar cuento completo</span></button>
+    <button id="btnEcho" class="btn-echo">🔁 <span id="btnEchoText">Modo eco</span></button>
+    <button id="btnTouchMode" class="btn-model" type="button" hidden>👆 Modo táctil / lectura por toque</button>
+    <button id="btnPauseEcho" class="btn-model" disabled>⏸️ Pausar</button>
+    <label class="echo-limit">Frases por sesión
+      <select id="echoLimit">
+        <option value="5">5 (6 años)</option>
+        <option value="10">10 (7-8 años)</option>
+        <option value="0">Todo el cuento</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- Reporte de desempeño y comprensión (al finalizar el cuento) -->
+  <div class="report" id="report">
+    <h2>🌟 Reporte pedagógico de lectura</h2>
+    <div class="report-student"><label for="studentName">Estudiante:</label><input id="studentName" type="text" placeholder="Nombre del estudiante"><span>Fecha: <strong id="reportDate"></strong></span></div>
+    <p><strong>Cuento:</strong> <span id="reportStoryTitle">El gato Tito y el pez</span> · <strong>Perfil:</strong> <span id="reportProfile"></span></p>
+    <section class="session-summary" id="sessionSummary" aria-live="polite">
+      <h3>🎉 ¡Cuento completado!</h3>
+      <p id="sessionPraise">¡Lo hiciste excelente!</p>
+      <p><strong id="sessionStars">+0 estrellas</strong> · Cuento #<strong id="sessionCount">0</strong></p>
+      <p id="sessionHistory">Progreso acumulado: 0 estrellas</p>
+      <div id="sessionWords"></div>
+      <p class="qualitative-summary" id="qualitativeSummary"></p>
+      <div class="practice-box" id="practiceBox" hidden>
+        <button id="btnPracticeWords" class="btn-echo">🪄 Practicar estas palabras (30s)</button>
+        <p id="practiceProgress" aria-live="polite"></p>
+      </div>
+    </section>
+    <div class="metrics">
+      <div class="metric"><b id="mAccuracy">0%</b><span>Precisión</span></div>
+      <div class="metric"><b id="mWcpm">0</b><span>Palabras correctas por minuto</span></div>
+      <div class="metric"><b id="mOmissions">0</b><span>Omisiones</span></div>
+      <div class="metric"><b id="mSubs">0</b><span>Sustituciones</span></div>
+      <div class="metric"><b id="mHesit">0</b><span>Vacilaciones (más de 3 s)</span></div>
+      <div class="metric"><b id="mSelf">0</b><span>Autocorrecciones</span></div>
+      <div class="metric"><b id="mIwl">0</b><span>Pausa entre palabras (cs)</span></div>
+      <div class="metric"><b id="mStars">0</b><span>Estrellas ⭐</span></div>
+    </div>
+
+    <h3>Palabras a practicar</h3>
+    <div class="chips" id="practiceList"></div>
+
+    <h3>Preguntas de comprensión</h3>
+    <div id="questions"></div>
+    <div class="qresult" id="qResult"></div>
+
+    <div class="report-actions">
+      <button id="btnAgain" class="btn-mic">🔁 Leer otra vez</button>
+      <button id="btnClose" class="btn-model">Cerrar</button>
+      <button id="btnPrintReport" class="btn-echo">🖨️ Imprimir Reporte Docente</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="achievementsModal" hidden>
+  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="achievementsTitle">
+    <h2 id="achievementsTitle">🏆 Cofre de Estrellas y Logros</h2>
+    <div class="achievement-list">
+      <p>⭐ Estrellas acumuladas: <strong id="achievementStars">0</strong></p>
+      <p>📚 Cuentos completados: <strong id="achievementStories">0</strong></p>
+      <p>🎖️ Medallas ganadas: <strong id="achievementMedals">Aún no hay medallas</strong></p>
+    </div>
+    <button id="btnCloseAchievements" class="btn-model" style="margin:16px auto 0">Cerrar</button>
+  </section>
+</div>
+<div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+<button class="calm-toggle" id="btnCalmMode" type="button" aria-pressed="false">🌙 Modo tranquilo: apagado</button>
+
+<script>
+  // ===== Cuento activo =====
+  const cuentoGatoTito = {
+    titulo: 'El gato Tito y el pez',
+    frases: [
+      'El gato Tito mira un pez rojo en el agua.',
+      'El pez saltó muy alto y cayó al piso.',
+      '—¡Auxilio, mi amigo pez necesita agua! —maulló Tito.',
+      'La niña Ana puso al pez en el agua.',
+      'Tito y el pez jugaron juntos con mucha alegría.'
+    ],
+    preguntas: [
+      { q: '¿Qué animal mira Tito en el agua?', options: ['Un pez rojo', 'Una rana verde', 'Una tortuga'], answer: 0 },
+      { q: '¿Quién puso al pez en el agua?', options: ['La niña Ana', 'Tito', 'La mamá de Ana'], answer: 0 },
+      { q: '¿Qué hicieron Tito y el pez al final?', options: ['Jugaron juntos', 'Se fueron a dormir', 'Saltaron al río'], answer: 0 }
+    ]
+  };
+  const cuentoPerroBruno = {
+    titulo: 'El perro Bruno y la pelota',
+    frases: [
+      'Bruno encontró una pelota azul junto al árbol.',
+      'El perro corrió feliz por el jardín verde.',
+      'La pelota rodó hasta la puerta de la casa.',
+      'Bruno la llevó a su amiga Sofía.',
+      'Jugaron juntos hasta que salió la luna.'
+    ],
+    preguntas: [
+      { q: '¿Qué encontró Bruno?', options: ['Una pelota azul', 'Un sombrero', 'Una manzana'], answer: 0 },
+      { q: '¿A quién llevó la pelota?', options: ['A Sofía', 'A Tito', 'A su vecino'], answer: 0 },
+      { q: '¿Hasta cuándo jugaron?', options: ['Hasta que salió la luna', 'Hasta el desayuno', 'Hasta que llovió'], answer: 0 }
+    ]
+  };
+  const cuentoImpermeableManu = {
+    titulo: 'El impermeable de Manu',
+    frases: [
+      'El cielo se llenó de nubes grises por la mañana.',
+      'Manu buscó su impermeable amarillo en el armario.',
+      'De pronto comenzó una lluvia fuerte en la ciudad.',
+      'Manu caminó contento y saltó sobre los charcos.',
+      'Al final llegó seco y feliz a la escuela.'
+    ],
+    preguntas: [
+      { q: '¿De qué color era el impermeable de Manu?', options: ['Amarillo', 'Verde', 'Rojo'], answer: 0 },
+      { q: '¿Dónde buscó Manu su impermeable?', options: ['En el armario', 'En el jardín', 'En la escuela'], answer: 0 },
+      { q: '¿Cómo llegó Manu a la escuela?', options: ['Seco y feliz', 'Mojado y triste', 'Cansado y dormido'], answer: 0 }
+    ]
+  };
+  const CATALOG_CUENTOS = [cuentoGatoTito, cuentoPerroBruno, cuentoImpermeableManu];
+  let currentStoryTitle = cuentoGatoTito.titulo;
+  let currentStoryObject = cuentoGatoTito;
+  let storyParagraphs = [...cuentoGatoTito.frases];
+  let canonicalText = storyParagraphs.join('\n\n');
+  let QUESTIONS = [...cuentoGatoTito.preguntas];
+
+  // ===== Referencias al DOM =====
+  const textContainer = document.getElementById('textContainer');
+  const btnListen = document.getElementById('btnListen');
+  const btnListenText = document.getElementById('btnListenText');
+  const btnReadAll = document.getElementById('btnReadAll');
+  const btnReadAllText = document.getElementById('btnReadAllText');
+  const statusBanner = document.getElementById('statusBanner');
+  const starsDisplay = document.getElementById('stars');
+  const reportEl = document.getElementById('report');
+
+  // ===== Estado =====
+  let allSpans = [];
+  let paragraphStarts = [];       // índice global de la primera palabra de cada párrafo
+  let paragraphEnds = [];         // índice global de la última palabra de cada párrafo
+  let currentWordIndex = 0;
+  let recognition = null;
+  let isListening = false;
+  let isNarrating = false;
+  let starsCount = 0;
+  let starsAtStoryStart = 0;
+  let sessionSaved = false;
+  let consumedPerResult = {};     // palabras ya procesadas por resultado de reconocimiento
+  let lastRestartAt = 0;
+  let isPausedForTTS = false;     // el micrófono está en pausa mientras habla Lina
+  let helpToken = 0;              // identifica la voz de Lina más reciente
+  let narrationActiveIndex = -1;  // palabra resaltada durante la lectura guiada
+  let lastParagraphRewarded = -1; // último párrafo completado que ya dio estrellas
+  let hesitationTimer = null;     // temporizador de ayuda espontánea
+  let hintedIndex = -1;           // palabra con la que Lina ya ayudó (una vez por palabra)
+  let drill = null;               // { start, end, resume } mientras se relee una frase
+  let stats = null;               // indicadores de lectura (profiling)
+
+  // Modo eco (Lina lee una frase y el niño la repite)
+  let echoLines = [];             // [{ start, end }] índices globales de cada frase
+  let echoActive = false;
+  let estadoTurno = 'IDLE';       // 'IDLE', 'NARRATING', 'WAITING_CHILD', 'HELPING', 'TRANSITION'
+  let lineaActualIndex = 0;       // frase en curso (o la siguiente al terminar una sesión)
+  let echoPointer = 0;            // próxima palabra que el niño debe leer
+  let echoToken = 0;              // invalida avisos de voz de turnos anteriores
+  let echoHelps = {};             // ayudas dadas por palabra
+  let echoMicRunning = false;
+  let echoSessionLimit = 5;
+  let echoSessionCount = 0;
+  let temporizadorInactividad = null;
+  let echoPaused = false;
+  let touchModeActive = false;
+  let calmModeActive = false;
+  let echoPauseStartedAt = 0;
+  let echoStateBeforePause = 'IDLE';
+  let audioOracionActual = null;
+  let tokenAudioOracion = 0;
+  let temporizadorAudioFallback = null;
+  const AUDIOS_TITO = [
+    'audio/gato-tito/oracion_1.m4a',
+    'audio/gato-tito/oracion_2.m4a',
+    'audio/gato-tito/oracion_3.m4a',
+    'audio/gato-tito/oracion_4.m4a',
+    'audio/gato-tito/oracion_5.m4a'
+  ];
+  let wordPracticeActive = false;
+  let wordPracticePrompting = false;
+  let wordPracticeList = [];
+  let wordPracticeIndex = 0;
+  let wordPracticeTimer = null;
+  let perfilLectura = null;
+  let ltmStage = 0;
+  let ltmStartedAt = 0;
+  let preserveLtmStageAfterSpeech = false;
+  const PERFIL_TIEMPOS = {
+    silabica: { visual: 8000, fonetica: 12000, modelado: 16000 },
+    fluida: { visual: 8000, fonetica: 10000, modelado: 12000 }
+  };
+
+  const synth = window.speechSynthesis;
+
+  // El navegador solo recuerda el permiso del micrófono en https o localhost.
+  // Abierto como archivo (file://) lo vuelve a pedir cada vez que se inicia el reconocimiento.
+  const permissionPersists = location.protocol === 'https:' ||
+    location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+  // ===== Utilidades =====
+  const PUNCT_REGEX = /[¿?¡!\-–—,.;:"“”«»'()\[\]{}_*\/\\#$%^&=~`]/g;
+
+  // Normaliza: minúsculas, sin puntuación en español y sin acentos
+  function normalize(word) {
+    return word
+      .toLowerCase()
+      .replace(PUNCT_REGEX, '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  // Texto de una palabra tal como se ve (con acentos), sin puntuación
+  function displayWord(index) {
+    return allSpans[index].textContent.replace(PUNCT_REGEX, '').trim();
+  }
+
+  function setStatus(message, type = 'info') {
+    const banner = document.getElementById('statusBanner');
+    const statusText = document.getElementById('statusText');
+    if (!banner || !statusText) return;
+    statusText.textContent = message;
+    banner.className = 'status-banner ' + (type || 'info');
+  }
+
+  // ===== Indicadores de lectura (profiling) =====
+  function resetStats() {
+    stats = {
+      omissions: 0,            // palabras saltadas sin leer
+      substitutions: 0,        // palabras reemplazadas o mal leídas
+      hesitations: 0,          // pausas de más de 3 segundos
+      selfCorrections: 0,      // error propio corregido por el niño
+      iwlSumMs: 0,             // suma de pausas entre palabras
+      iwlCount: 0,
+      errorWords: new Set(),       // omisiones y sustituciones (afectan la precisión)
+      hesitationWords: new Set(),  // palabras con vacilación
+      helpWords: new Set(),        // palabras en las que Lina o el niño pidió ayuda
+      activeMs: 0,             // tiempo total de lectura con el micrófono activo
+      segmentStart: null,
+      lastAdvanceAt: null,
+      pendingUnmatched: false  // se dijo algo que no coincidió con lo esperado
+    };
+  }
+
+  // Registra omisiones, sustituciones, autocorrecciones, vacilaciones y latencia
+  function registerAdvance(hit, from = currentWordIndex) {
+    if (drill) return; // la relectura de una frase no cuenta en el reporte
+    const now = Date.now();
+    const count = hit - from + 1;
+
+    if (stats.lastAdvanceAt !== null) {
+      const gap = now - stats.lastAdvanceAt;
+      stats.iwlSumMs += gap;
+      stats.iwlCount += count;
+      if (gap > 3000) {
+        stats.hesitations++;
+        stats.hesitationWords.add(from);
+      }
+    }
+
+    const skipped = hit - from;
+    for (let k = 0; k < skipped; k++) {
+      const idx = from + k;
+      if (k === 0 && stats.pendingUnmatched) stats.substitutions++;
+      else stats.omissions++;
+      stats.errorWords.add(idx);
+    }
+    if (skipped === 0 && stats.pendingUnmatched) stats.selfCorrections++;
+
+    stats.pendingUnmatched = false;
+    stats.lastAdvanceAt = now;
+  }
+
+  function computeReport() {
+    const total = allSpans.filter(s => s.dataset.clean !== '').length;
+    const errors = stats.errorWords.size;
+    const correct = Math.max(0, total - errors);
+    const accuracy = total ? Math.round((correct / total) * 100) : 0;
+    const minutes = Math.max(stats.activeMs / 60000, 1 / 60);
+    const wcpm = Math.round(correct / minutes);
+    const iwlCs = stats.iwlCount ? Math.round(stats.iwlSumMs / stats.iwlCount / 10) : 0;
+
+    const practiceIdx = new Set([...stats.errorWords, ...stats.hesitationWords, ...stats.helpWords]);
+    const practice = [];
+    [...practiceIdx].sort((a, b) => a - b).forEach(i => {
+      const w = displayWord(i).toLowerCase();
+      if (w && !practice.includes(w)) practice.push(w);
+    });
+
+    return { accuracy, wcpm, iwlCs, practice: practice.slice(0, 14) };
+  }
+
+  // ===== Renderizado =====
+  function renderText() {
+    textContainer.innerHTML = '';
+    allSpans = [];
+    paragraphStarts = [];
+    paragraphEnds = [];
+    const paragraphs = canonicalText.split('\n\n');
+    let globalIndex = 0;
+
+    paragraphs.forEach(paragraphText => {
+      const p = document.createElement('p');
+      p.className = 'sentence';
+      p.dataset.startWord = String(globalIndex);
+      const words = paragraphText.trim().split(/\s+/);
+      paragraphStarts.push(globalIndex);
+
+      words.forEach(wordText => {
+        const span = document.createElement('span');
+        span.classList.add('word');
+        span.dataset.clean = normalize(wordText);
+        span.dataset.index = globalIndex;
+        span.textContent = wordText;
+        span.setAttribute('role', 'button');
+        span.setAttribute('tabindex', '0');
+        span.setAttribute('aria-label', `Palabra: ${wordText.replace(PUNCT_REGEX, '')}`);
+        span.addEventListener('click', () => handleWordClick(wordText, span));
+        span.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleWordClick(wordText, span); }
+        });
+        p.appendChild(span);
+        p.appendChild(document.createTextNode(' '));
+        allSpans.push(span);
+        globalIndex++;
+      });
+
+      paragraphEnds.push(globalIndex - 1);
+      p.dataset.endWord = String(globalIndex - 1);
+      textContainer.appendChild(p);
+    });
+  }
+
+  // ===== Carga de cuento sin perder la estructura de la aplicación =====
+  function cargarNuevoCuento(cuentoObjeto, anunciar = true) {
+    if (!cuentoObjeto || !Array.isArray(cuentoObjeto.frases)) return;
+    if (echoActive) stopEcho(false);
+    stopListening();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    clearTimeout(hesitationTimer);
+    clearTimeout(temporizadorInactividad);
+
+    detenerAudioOracion();
+    currentStoryObject = cuentoObjeto;
+    currentStoryTitle = cuentoObjeto.titulo || 'Lectura nueva';
+    storyParagraphs = cuentoObjeto.frases.filter(Boolean);
+    canonicalText = storyParagraphs.join('\n\n');
+    QUESTIONS = Array.isArray(cuentoObjeto.preguntas) ? [...cuentoObjeto.preguntas] : [];
+    document.title = `Lectura asistida - ${currentStoryTitle}`;
+    const tituloElem = document.getElementById('story-title');
+    if (tituloElem) tituloElem.textContent = currentStoryTitle;
+    const picker = document.getElementById('storySelect');
+    if (picker && picker.value !== String(CATALOG_CUENTOS.indexOf(cuentoObjeto))) picker.value = String(CATALOG_CUENTOS.indexOf(cuentoObjeto));
+
+    currentWordIndex = 0;
+    lineaActualIndex = 0;
+    echoPointer = 0;
+    echoSessionCount = 0;
+    ltmStage = 0;
+    ltmStartedAt = 0;
+    hintedIndex = -1;
+    drill = null;
+    consumedPerResult = {};
+    sessionSaved = false;
+    starsAtStoryStart = starsCount;
+    resetStats();
+    hideReport();
+    renderText();
+    echoLines = buildEchoLines();
+    setStatus(`👩‍🏫 Cuento: «${currentStoryTitle}». ¡Comencemos!`, 'info');
+    if (anunciar && perfilLectura) hablarLina(`Vamos a leer: ${currentStoryTitle}. ¡Comencemos!`);
+  }
+
+  // ===== Síntesis de voz (TTS) =====
+  function getSpanishVoice() {
+    const voices = synth.getVoices();
+    return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('es')) || null;
+  }
+
+  function createUtterance(text) {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'es-ES';
+    u.rate = 0.85; // velocidad pausada para niños
+    const voice = getSpanishVoice();
+    if (voice) u.voice = voice;
+    return u;
+  }
+
+  function speakText(text, callback) {
+    if (!synth) {
+      if (callback) callback();
+      return;
+    }
+    synth.cancel(); // limpia la cola de audio anterior
+    const u = createUtterance(text);
+    if (callback) {
+      u.onend = callback;
+      u.onerror = callback;
+    }
+    synth.speak(u);
+  }
+
+  // Lina habla. Si el micrófono está activo, se pausa mientras suena la voz y se reanuda al terminar,
+  // así no escucha el altavoz ni marca palabras por error.
+  function hablarLina(texto, callback) {
+    if (!synth) {
+      if (callback) callback();
+      return;
+    }
+
+    const myToken = ++helpToken;
+    const reanudar = () => {
+      if (myToken !== helpToken) return; // hay una voz de Lina más reciente en curso
+      isPausedForTTS = false;
+      if (isListening && recognition) {
+        if (permissionPersists) {
+          consumedPerResult = {};
+          try {
+            lastRestartAt = Date.now();
+            recognition.start();
+          } catch (e) {
+            // si aún se estaba deteniendo, onend lo reanudará
+          }
+        }
+        if (preserveLtmStageAfterSpeech) preserveLtmStageAfterSpeech = false;
+        else verificarOmision();
+      }
+      if (callback) callback();
+    };
+
+    if (isListening && recognition) {
+      isPausedForTTS = true;
+      clearTimeout(hesitationTimer);
+      // Con permiso persistente se detiene el micrófono. Sin él, detenerlo y reiniciarlo
+      // volvería a pedir permiso, así que solo se ignora lo que oye mientras Lina habla.
+      if (permissionPersists) {
+        try { recognition.stop(); } catch (e) {}
+      }
+    }
+
+    speakText(texto, reanudar);
+  }
+
+  // Tap-to-Help: pronuncia la palabra sola y la resalta en naranja
+  function handleWordClick(wordText, element) {
+    const clean = wordText.replace(PUNCT_REGEX, '').trim();
+    if (!clean) return;
+    if (touchModeActive && echoActive) {
+      avanzarPalabraPorToque(Number(element.dataset.index));
+      return;
+    }
+    element.classList.add('ltm-visual-cue');
+    if (isListening) stats.helpWords.add(Number(element.dataset.index));
+    setStatus(`Lina pronuncia: "${clean}"`, '');
+    if (isNarrating) stopNarration();
+    hablarLina(clean);
+  }
+
+  // ===== Modo lectura guiada (Escuchar cuento completo) =====
+  function startNarration() {
+    if (!synth) {
+      setStatus('Tu navegador no puede leer en voz alta. Prueba con Google Chrome o Microsoft Edge.', 'warn');
+      return;
+    }
+    if (echoActive) stopEcho(false);
+    stopListening();
+    synth.cancel();
+    isNarrating = true;
+    btnReadAll.classList.add('speaking');
+    btnReadAllText.textContent = 'Detener lectura';
+    setStatus('Escucha cómo lee Lina el cuento completo...', '');
+
+    allSpans.forEach(s => s.classList.remove('active'));
+    narrationActiveIndex = -1;
+
+    // Se narra por párrafos para evitar cortes en textos largos
+    const paragraphs = canonicalText.split('\n\n').map(p => p.trim()).filter(Boolean);
+    let baseIndex = 0; // índice global de la primera palabra del párrafo
+
+    paragraphs.forEach((paragraph, i) => {
+      // Posición (charIndex) donde empieza cada palabra dentro del párrafo
+      const offsets = [];
+      const wordRegex = /\S+/g;
+      let match;
+      while ((match = wordRegex.exec(paragraph)) !== null) offsets.push(match.index);
+
+      const startIndex = baseIndex;
+      baseIndex += offsets.length;
+
+      const u = createUtterance(paragraph);
+
+      u.onstart = () => {
+        if (isNarrating) setNarrationWord(startIndex);
+      };
+
+      // Ilumina en tiempo real la palabra que Lina está leyendo
+      u.onboundary = (event) => {
+        if (!isNarrating) return;
+        if (event.name && event.name !== 'word') return;
+        let w = 0;
+        for (let k = 0; k < offsets.length; k++) {
+          if (offsets[k] <= event.charIndex) w = k;
+          else break;
+        }
+        setNarrationWord(startIndex + w);
+      };
+
+      if (i === paragraphs.length - 1) {
+        u.onend = () => {
+          if (isNarrating) {
+            finishNarrationUI();
+            setStatus('¡Ahora es tu turno de leer!', '');
+          }
+        };
+      }
+      u.onerror = () => {};
+      synth.speak(u);
+    });
+  }
+
+  // Mueve el resaltado (.active) de la narración y mantiene la palabra visible
+  function setNarrationWord(index) {
+    if (narrationActiveIndex >= 0 && allSpans[narrationActiveIndex]) {
+      allSpans[narrationActiveIndex].classList.remove('active');
+    }
+    narrationActiveIndex = index;
+    if (index >= 0 && allSpans[index]) {
+      allSpans[index].classList.add('active');
+      allSpans[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function finishNarrationUI() {
+    isNarrating = false;
+    setNarrationWord(-1);
+    btnReadAll.classList.remove('speaking');
+    btnReadAllText.textContent = 'Escuchar cuento completo';
+  }
+
+  function stopNarration() {
+    if (synth) synth.cancel();
+    finishNarrationUI();
+  }
+
+  // ===== Reconocimiento de voz (ASR) =====
+  function setupSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setStatus('Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Microsoft Edge para leer con Lina. Aún puedes tocar las palabras y escuchar el cuento.', 'warn');
+      btnListen.disabled = true;
+      document.getElementById('btnTouchMode').hidden = false;
+      return;
+    }
+
+    recognition = configurarReconocimientoTolerante();
+    if (!recognition) return;
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (wordPracticeActive) {
+          if (wordPracticePrompting) continue;
+          const wanted = normalize(wordPracticeList[wordPracticeIndex] || '');
+          const transcript = elegirAlternativa(event.results[i], wanted);
+          const tokens = transcript.trim().split(/\s+/).filter(Boolean);
+          if (tokens.some(token => matches(token, wanted))) avanzarPracticaPalabra();
+          continue;
+        }
+        if (echoActive && (echoPaused || estadoTurno !== 'WAITING_CHILD')) continue;
+        if (!echoActive && isPausedForTTS) continue;
+        let expected = '';
+        if (echoActive) {
+          const idx = obtenerSiguientePalabraNoLeida();
+          if (idx >= 0) expected = allSpans[idx].dataset.clean;
+        } else if (allSpans[currentWordIndex]) {
+          expected = allSpans[currentWordIndex].dataset.clean;
+        }
+        const transcript = elegirAlternativa(event.results[i], expected);
+        const words = transcript.trim().split(/\s+/).filter(Boolean);
+        const already = consumedPerResult[i] || 0;
+        const fresh = words.slice(already);
+        if (!fresh.length) continue;
+        consumedPerResult[i] = words.length;
+        if (echoActive) procesarVozNiñoEnEco(fresh);
+        else processSpokenWords(fresh);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === 'no-speech' || event.error === 'aborted') return; // tolerados: onend reconecta
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        stopListening();
+        stopEcho(false);
+        document.getElementById('btnTouchMode').hidden = false;
+        setStatus('No hay permiso para el micrófono. Puedes continuar con Modo táctil / lectura por toque.', 'warn');
+        return;
+      }
+      if (event.error === 'audio-capture') {
+        stopListening();
+        stopEcho(false);
+        document.getElementById('btnTouchMode').hidden = false;
+        setStatus('No encuentro un micrófono. Puedes continuar con Modo táctil / lectura por toque.', 'warn');
+        return;
+      }
+      console.warn('Error de reconocimiento:', event.error);
+    };
+
+    // Reconexión fluida si el micrófono se detiene solo
+    recognition.onend = () => {
+      consumedPerResult = {};
+
+      if (wordPracticeActive) {
+        if (!wordPracticePrompting) setTimeout(iniciarMicrofonoPractica, 250);
+        return;
+      }
+
+      if (echoActive) {
+        echoMicRunning = false;
+        if (echoPaused) return;
+        if (estadoTurno === 'WAITING_CHILD' && !touchModeActive) {
+          setTimeout(() => {
+            if (echoActive && !echoPaused && !touchModeActive && estadoTurno === 'WAITING_CHILD') echoMicOn();
+          }, 300);
+        }
+        return;
+      }
+
+      if (!isListening) return;
+
+      // Sin permiso persistente, reiniciar el micrófono volvería a pedir permiso una y otra vez
+      if (!permissionPersists) {
+        stopListening();
+        setStatus('El micrófono se detuvo. Toca "Empezar a leer" para continuar. Consejo: abre esta página desde http://localhost o https para que el permiso se recuerde.', 'warn');
+        return;
+      }
+
+      if (isPausedForTTS) return;
+
+      const wait = Math.max(0, 300 - (Date.now() - lastRestartAt));
+      setTimeout(() => {
+        if (!isListening || isPausedForTTS) return;
+        try {
+          lastRestartAt = Date.now();
+          recognition.start();
+        } catch (e) {
+          // ya estaba iniciado; se ignora
+        }
+      }, wait);
+    };
+  }
+
+  function markRead(index) {
+    allSpans[index].classList.remove('active', 'ltm-visual-cue');
+    allSpans[index].classList.add('read');
+  }
+
+  function focusCurrent() {
+    if (currentWordIndex < allSpans.length) {
+      const el = allSpans[currentWordIndex];
+      el.classList.add('active');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  // ===== 1. Reconocedor con tolerancia ampliada =====
+  function configurarReconocimientoTolerante() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    const rec = new SpeechRecognition();
+    rec.lang = 'es-ES';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 5;
+    return rec;
+  }
+
+  // ===== 2. Similitud de Levenshtein =====
+  function calcularSimilitud(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const m = a.length, n = b.length;
+    let anterior = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const actual = [i];
+      for (let j = 1; j <= n; j++) {
+        const costo = a[i - 1] === b[j - 1] ? 0 : 1;
+        actual[j] = Math.min(anterior[j] + 1, actual[j - 1] + 1, anterior[j - 1] + costo);
+      }
+      anterior = actual;
+    }
+    return 1 - anterior[n] / Math.max(m, n);
+  }
+
+  // ===== 3. Coincidencia flexible para lectura infantil =====
+  function coincidenciaFlexible(hablado, esperado) {
+    const h = normalize(hablado);
+    const e = normalize(esperado);
+    if (!h || !e) return false;
+    if (h === e) return true;
+    if (h.includes(e) || e.includes(h)) return true;
+    if (calcularSimilitud(h, e) >= 0.65) return true;
+    return e.length >= 5 && h.length >= 3 && e.startsWith(h.substring(0, 3));
+  }
+
+  function matches(spoken, expected) {
+    return coincidenciaFlexible(spoken, expected);
+  }
+
+  // Escoge una hipótesis ASR comparando su primera palabra con la palabra esperada.
+  function elegirAlternativa(result, esperado) {
+    if (!result || !result.length) return '';
+    let mejor = result[0].transcript || '';
+    let mejorPuntaje = -1;
+    for (let j = 0; j < result.length; j++) {
+      const texto = (result[j].transcript || '').trim();
+      const primera = texto.split(/\s+/)[0] || '';
+      const palabra = normalize(primera);
+      const objetivo = normalize(esperado);
+      const puntaje = palabra && objetivo ? calcularSimilitud(palabra, objetivo) : 0;
+      if (coincidenciaFlexible(palabra, objetivo)) return texto;
+      if (puntaje > mejorPuntaje) { mejorPuntaje = puntaje; mejor = texto; }
+    }
+    return mejor;
+  }
+
+  function skipEmptyTokens() {
+    // Palabras que quedan vacías tras normalizar (por ejemplo un guion suelto) se dan por leídas
+    while (currentWordIndex < allSpans.length && allSpans[currentWordIndex].dataset.clean === '') {
+      markRead(currentWordIndex);
+      currentWordIndex++;
+    }
+  }
+
+  // ===== Jerarquía Least-to-Most para silencios / vacilaciones =====
+  function obtenerPrimeraSilaba(texto) {
+    const limpio = normalize(texto);
+    const m = limpio.match(/^[^aeiouáéíóúü]*[aeiouáéíóúü]+(?:[^aeiouáéíóúü](?=[^aeiouáéíóúü]|$))?/i);
+    return m ? m[0] : limpio.slice(0, 2);
+  }
+
+  function verificarOmision() {
+    clearTimeout(hesitationTimer);
+    if (!isListening) return;
+    ltmStage = 0;
+    ltmStartedAt = Date.now();
+    programarAyudaNormal();
+  }
+
+  function programarAyudaNormal() {
+    if (!isListening || isPausedForTTS) return;
+    const tiempos = PERFIL_TIEMPOS[perfilLectura || 'silabica'];
+    const hitos = [tiempos.visual, tiempos.fonetica, tiempos.modelado];
+    const idx = currentWordIndex;
+    const siguiente = hitos[ltmStage];
+    if (!siguiente) return;
+    hesitationTimer = setTimeout(() => {
+      const palabra = allSpans[idx];
+      if (!isListening || isPausedForTTS || currentWordIndex !== idx || !palabra || palabra.classList.contains('read')) return;
+      if (ltmStage === 0) {
+        palabra.classList.add('ltm-visual-cue');
+        if (!drill) stats.helpWords.add(idx);
+        setStatus('Pista visual: mira la palabra y tómate tu tiempo.', '');
+      } else if (ltmStage === 1) {
+        const silaba = obtenerPrimeraSilaba(displayWord(idx));
+        setStatus(`Pista: la palabra empieza con «${silaba}…»`, '');
+        preserveLtmStageAfterSpeech = true;
+        hablarLina(`Empieza con ${silaba}...`, programarAyudaNormal);
+      } else {
+        const texto = displayWord(idx);
+        setStatus(`Lina modela la palabra: «${texto}». Intenta leerla.`, '');
+        preserveLtmStageAfterSpeech = true;
+        hablarLina(`${texto}. Intenta decirla.`, programarAyudaNormal);
+        hintedIndex = idx;
+      }
+      ltmStage++;
+      programarAyudaNormal();
+    }, Math.max(0, siguiente - (Date.now() - ltmStartedAt)));
+  }
+
+  // ===== Frase de repaso (Phrase Drill) =====
+  function troubleCount(from, to) {
+    let n = 0;
+    for (let i = from; i <= to; i++) {
+      if (stats.errorWords.has(i) || stats.hesitationWords.has(i)) n++;
+    }
+    return n;
+  }
+
+  // Divide un párrafo en frases (terminan en . ! ?)
+  function sentencesOf(p) {
+    const sentences = [];
+    let start = paragraphStarts[p];
+    for (let i = paragraphStarts[p]; i <= paragraphEnds[p]; i++) {
+      if (/[.!?]["”»]?$/.test(allSpans[i].textContent) || i === paragraphEnds[p]) {
+        sentences.push([start, i]);
+        start = i + 1;
+      }
+    }
+    return sentences;
+  }
+
+  // Lina modela la frase con más dificultades y el niño la relee
+  function startPhraseDrill(p) {
+    let best = null;
+    let bestCount = 0;
+    sentencesOf(p).forEach(([s, e]) => {
+      const c = troubleCount(s, e);
+      if (c > bestCount) { best = [s, e]; bestCount = c; }
+    });
+    if (!best) return false;
+
+    const [s, e] = best;
+    for (let i = s; i <= e; i++) allSpans[i].className = 'word';
+    drill = { start: s, end: e, resume: paragraphEnds[p] + 1 };
+    hintedIndex = -1;
+    currentWordIndex = s;
+    skipEmptyTokens();
+    focusCurrent();
+
+    const frase = allSpans.slice(s, e + 1).map(w => w.textContent).join(' ').replace(/[-–—]/g, ' ');
+    setStatus('🔁 Vamos a releer esta frase juntas. Escucha a Lina y léela otra vez.', 'warn');
+    hablarLina('Vamos a releer esta frase juntas. ' + frase);
+    return true;
+  }
+
+  function finishDrill() {
+    const resume = drill.resume;
+    drill = null;
+    hintedIndex = -1;
+    currentWordIndex = resume;
+    skipEmptyTokens();
+    if (currentWordIndex >= allSpans.length) {
+      completeReading();
+      return;
+    }
+    focusCurrent();
+    setStatus('¡Excelente relectura! Seguimos con el cuento.', '');
+  }
+
+  // Marcar palabra como OMITIDA (amarillo/rojo con tachado)
+  function markOmitted(index) {
+    if (!allSpans[index]) return;
+    allSpans[index].classList.remove('active', 'read', 'ltm-visual-cue');
+    allSpans[index].classList.add('omitted');
+  }
+
+  // ===== Procesar palabras habladas (con detección de omisiones) =====
+  function processSpokenWords(spokenWords) {
+    let advanced = false;
+    let omissionNote = ''; // aviso visible de la última omisión detectada
+
+    spokenWords.forEach(raw => {
+      if (currentWordIndex >= allSpans.length) return;
+      const spoken = normalize(raw);
+      if (!spoken) return;
+
+      skipEmptyTokens();
+      if (currentWordIndex >= allSpans.length) return;
+
+      // Búsqueda ampliada: coincidencia con la palabra actual o con hasta 6 palabras adelante
+      let hit = -1;
+      const maxLook = Math.min(6, allSpans.length - currentWordIndex - 1);
+      for (let look = 0; look <= maxLook; look++) {
+        const expected = allSpans[currentWordIndex + look].dataset.clean;
+        // Para saltos largos se exigen palabras de 3 letras o más, así "el" o "y" no provocan saltos falsos
+        if (look > 2 && (spoken.length < 3 || expected.length < 3)) continue;
+        if (matches(spoken, expected)) { hit = currentWordIndex + look; break; }
+      }
+
+      if (hit < 0) {
+        stats.pendingUnmatched = true; // algo dicho que no coincide: posible sustitución
+        return;
+      }
+
+      // Palabras saltadas entre la posición actual y el acierto
+      const skippedWords = [];
+      for (let i = currentWordIndex; i < hit; i++) {
+        if (allSpans[i].dataset.clean !== '') skippedWords.push(displayWord(i));
+      }
+
+      registerAdvance(hit); // estadísticas (usa currentWordIndex antes de moverlo)
+
+      for (let i = currentWordIndex; i < hit; i++) {
+        if (allSpans[i].dataset.clean === '') markRead(i);
+        else markOmitted(i); // marca visual de omisión
+      }
+      markRead(hit);
+      currentWordIndex = hit + 1;
+      skipEmptyTokens();
+      advanced = true;
+
+      // Retroalimentación inmediata: voz si se saltan 2 o más palabras, aviso en pantalla si es 1
+      if (skippedWords.length >= 2) {
+        omissionNote = `⚠️ Te saltaste: "${skippedWords.join(' ')}"`;
+        hablarLina(`Te saltaste las palabras: "${skippedWords.join(' ')}". Seguimos desde ${displayWord(hit)}.`);
+      } else if (skippedWords.length === 1) {
+        omissionNote = `⚠️ Omitiste la palabra: "${skippedWords[0]}"`;
+      }
+    });
+
+    if (!advanced) return;
+    verificarOmision();
+
+    // Durante la relectura de una frase no se dan estrellas ni se avanza el cuento
+    if (drill) {
+      if (currentWordIndex > drill.end) {
+        finishDrill();
+        return;
+      }
+      focusCurrent();
+      if (omissionNote) setStatus(omissionNote, 'warn');
+      else setStatus('Vuelve a leer la frase. ¡Tú puedes!', '');
+      return;
+    }
+
+    // Refuerzo positivo: +2 estrellas por cada párrafo completado
+    let message = '¡Muy bien! Sigue leyendo...';
+    let drillParagraph = -1;
+    while (lastParagraphRewarded + 1 < paragraphEnds.length &&
+           paragraphEnds[lastParagraphRewarded + 1] < currentWordIndex) {
+      lastParagraphRewarded++;
+      starsCount += 2;
+      starsDisplay.textContent = starsCount;
+      message = `⭐ +2 estrellas por completar el párrafo ${lastParagraphRewarded + 1}. ¡Sigue así!`;
+
+      // Si hubo varios errores en el párrafo, se prepara una relectura de la frase más difícil
+      const p = lastParagraphRewarded;
+      if (drillParagraph < 0 && troubleCount(paragraphStarts[p], paragraphEnds[p]) >= 2) {
+        drillParagraph = p;
+      }
+    }
+
+    if (drillParagraph >= 0 && startPhraseDrill(drillParagraph)) return;
+
+    if (currentWordIndex >= allSpans.length) {
+      completeReading();
+      return;
+    }
+    focusCurrent();
+    if (omissionNote) setStatus(omissionNote, 'warn');
+    else setStatus(message, '');
+  }
+
+  // ===== Progreso persistente y cierre de lectura =====
+  function guardarSesionEnHistorial(estrellasGanadas, precision, palabrasDificiles) {
+    const key = 'historialLectura';
+    let historial = { estrellasTotales: 0, cuentosLeidos: 0, palabrasParaRepasar: [], medallas: [] };
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) || 'null');
+      if (saved && typeof saved === 'object') {
+        historial.estrellasTotales = Number(saved.estrellasTotales) || 0;
+        historial.cuentosLeidos = Number(saved.cuentosLeidos) || 0;
+        historial.palabrasParaRepasar = Array.isArray(saved.palabrasParaRepasar) ? saved.palabrasParaRepasar : [];
+        historial.medallas = Array.isArray(saved.medallas) ? saved.medallas : [];
+      }
+      historial.estrellasTotales += Math.max(0, Number(estrellasGanadas) || 0);
+      historial.cuentosLeidos += 1;
+      const nuevasMedallas = [
+        ...(historial.cuentosLeidos >= 1 ? ['Primer cuento'] : []),
+        ...(historial.cuentosLeidos >= 3 ? ['Lector constante'] : []),
+        ...(historial.cuentosLeidos >= 5 ? ['Gran lector'] : [])
+      ];
+      nuevasMedallas.forEach(m => { if (!historial.medallas.includes(m)) historial.medallas.push(m); });
+      palabrasDificiles.forEach(p => {
+        if (p && !historial.palabrasParaRepasar.includes(p)) historial.palabrasParaRepasar.push(p);
+      });
+      historial.ultimaPrecision = Math.max(0, Math.min(100, Number(precision) || 0));
+      localStorage.setItem(key, JSON.stringify(historial));
+    } catch (e) {
+      console.warn('No fue posible guardar el historial local:', e);
+    }
+    return historial;
+  }
+
+  function mostrarCierreDeSesion(report, estrellasGanadas, historial, palabrasConAyuda) {
+    document.getElementById('sessionStars').textContent = `+${estrellasGanadas} estrellas`;
+    document.getElementById('sessionCount').textContent = historial.cuentosLeidos;
+    document.getElementById('sessionHistory').textContent =
+      `Progreso acumulado: ${historial.estrellasTotales} estrellas · Precisión de hoy: ${report.accuracy}%`;
+    const palabras = document.getElementById('sessionWords');
+    const practica = palabrasConAyuda.slice(0, 3);
+    palabras.textContent = practica.length
+      ? `Palabras para practicar: ${practica.join(' · ')}`
+      : '¡Leíste con mucha fluidez y sin palabras para repasar!';
+    wordPracticeList = practica;
+    document.getElementById('practiceBox').hidden = practica.length === 0;
+    document.getElementById('practiceProgress').textContent = '';
+    document.getElementById('btnPracticeWords').disabled = false;
+    const saludo = palabrasConAyuda.length
+      ? `¡Fantástico trabajo! Completaste la lectura. Ganaste ${estrellasGanadas} estrellas. Hoy practicamos ${palabrasConAyuda.slice(0, 3).join(', ')}. ¡Cada día lees mejor!`
+      : `¡Fantástico trabajo! Completaste la lectura. Ganaste ${estrellasGanadas} estrellas. ¡Leíste con mucha fluidez!`;
+    document.getElementById('sessionPraise').textContent = palabrasConAyuda.length
+      ? '¡Lo hiciste excelente! Cada día lees mejor.'
+      : '¡Leíste con mucha fluidez y sin detenerte!';
+    hablarLina(saludo);
+  }
+
+  // ===== Fin de la lectura: reporte y comprensión =====
+  function completeReading() {
+    stopListening();
+    starsCount += 15;
+    starsDisplay.textContent = starsCount;
+
+    const report = computeReport();
+    const estrellasGanadas = Math.max(0, starsCount - starsAtStoryStart);
+    const indicesPractica = new Set([...(stats.errorWords || []), ...(stats.helpWords || [])]);
+    const palabrasConAyuda = [...indicesPractica]
+      .map(i => allSpans[i]?.textContent.replace(PUNCT_REGEX, '').trim().toLowerCase())
+      .filter(Boolean);
+    let historial;
+    if (!sessionSaved) {
+      historial = guardarSesionEnHistorial(estrellasGanadas, report.accuracy, palabrasConAyuda);
+      sessionSaved = true;
+    } else {
+      try {
+        historial = JSON.parse(localStorage.getItem('historialLectura')) || { estrellasTotales: estrellasGanadas, cuentosLeidos: 1, palabrasParaRepasar: [] };
+      } catch (e) {
+        historial = { estrellasTotales: estrellasGanadas, cuentosLeidos: 1, palabrasParaRepasar: [] };
+      }
+    }
+    mostrarCierreDeSesion(report, estrellasGanadas, historial, palabrasConAyuda);
+    showReport(report);
+    lanzarConfeti();
+    actualizarCofreLogros(historial);
+    setStatus(`🎉 ¡Felicidades! Terminaste de leer «${currentStoryTitle}».`, 'celebrate');
+  }
+
+  function showReport(report) {
+    document.getElementById('reportDate').textContent = new Intl.DateTimeFormat('es', { dateStyle: 'long' }).format(new Date());
+    document.getElementById('reportStoryTitle').textContent = currentStoryTitle;
+    document.getElementById('reportProfile').textContent = perfilLectura === 'fluida' ? '3.º grado — lectura fluida' : '1.º/2.º grado — lectura silábica';
+    const qualitative = report.accuracy >= 90 ? 'Lectura precisa; mantener práctica de fluidez y comprensión.' : report.accuracy >= 70 ? 'Lectura en desarrollo; repasar las palabras marcadas y continuar con lectura acompañada.' : 'Requiere acompañamiento cercano; practicar palabras breves y pausas, respetando el ritmo del estudiante.';
+    document.getElementById('qualitativeSummary').textContent = `Observación pedagógica: ${qualitative}`;
+    document.getElementById('mAccuracy').textContent = report.accuracy + '%';
+    document.getElementById('mWcpm').textContent = report.wcpm;
+    document.getElementById('mOmissions').textContent = stats.omissions;
+    document.getElementById('mSubs').textContent = stats.substitutions;
+    document.getElementById('mHesit').textContent = stats.hesitations;
+    document.getElementById('mSelf').textContent = stats.selfCorrections;
+    document.getElementById('mIwl').textContent = report.iwlCs;
+    document.getElementById('mStars').textContent = starsCount;
+
+    const practiceList = document.getElementById('practiceList');
+    practiceList.innerHTML = '';
+    if (report.practice.length === 0) {
+      const chip = document.createElement('span');
+      chip.className = 'chip good';
+      chip.textContent = '¡Ninguna! Leíste todo muy bien';
+      practiceList.appendChild(chip);
+    } else {
+      report.practice.forEach(w => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = w;
+        chip.style.cursor = 'pointer';
+        chip.addEventListener('click', () => speakText(w));
+        practiceList.appendChild(chip);
+      });
+    }
+
+    renderQuestions();
+    reportEl.classList.add('show');
+    reportEl.scrollTop = 0;
+  }
+
+  function renderQuestions() {
+    const box = document.getElementById('questions');
+    const result = document.getElementById('qResult');
+    box.innerHTML = '';
+    result.textContent = '';
+    let answered = 0;
+    let correct = 0;
+
+    QUESTIONS.forEach(item => {
+      const wrap = document.createElement('div');
+      wrap.className = 'question';
+
+      const title = document.createElement('p');
+      title.className = 'question-text';
+      const label = document.createElement('span');
+      label.textContent = item.q;
+      const listen = document.createElement('button');
+      listen.className = 'listen-q';
+      listen.textContent = '🔊';
+      listen.addEventListener('click', () => speakText(item.q));
+      title.appendChild(label);
+      title.appendChild(listen);
+      wrap.appendChild(title);
+
+      const options = document.createElement('div');
+      options.className = 'options';
+      const buttons = [];
+      let done = false;
+
+      item.options.forEach((text, idx) => {
+        const b = document.createElement('button');
+        b.className = 'option';
+        b.textContent = text;
+        b.addEventListener('click', () => {
+          if (done) return;
+          done = true;
+          answered++;
+          if (idx === item.answer) {
+            correct++;
+            b.classList.add('correct');
+            speakText('¡Correcto!');
+          } else {
+            b.classList.add('wrong');
+            buttons[item.answer].classList.add('correct');
+            speakText('Casi. La respuesta es: ' + item.options[item.answer]);
+          }
+          if (answered === QUESTIONS.length) {
+            result.textContent = `Comprensión: ${correct} de ${QUESTIONS.length} respuestas correctas`;
+          }
+        });
+        buttons.push(b);
+        options.appendChild(b);
+      });
+
+      wrap.appendChild(options);
+      box.appendChild(wrap);
+    });
+  }
+
+  function hideReport() {
+    reportEl.classList.remove('show');
+    if (synth) synth.cancel();
+  }
+
+  // ===== Control del micrófono =====
+  // Solo consulta el estado del permiso. El único aviso real lo lanza recognition.start(),
+  // así que ya no hay una segunda petición con getUserMedia.
+  async function ensureMic() {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const perm = await navigator.permissions.query({ name: 'microphone' });
+        if (perm.state === 'denied') {
+          setStatus('El micrófono está bloqueado. Toca el candado junto a la dirección, permite el micrófono y recarga la página.', 'warn');
+          return false;
+        }
+      }
+    } catch (e) {
+      // Permissions API no disponible: se continúa
+    }
+    return true;
+  }
+
+  async function startListening() {
+    if (echoActive) stopEcho(false);
+    if (!recognition || isListening) return;
+    setStatus('Acepta el permiso del micrófono cuando el navegador te lo pida.', '');
+    const ok = await ensureMic();
+    if (!ok || isListening) return;
+    if (isNarrating) stopNarration();
+    if (synth) synth.cancel();
+
+    // Si ya se completó, o es la primera vez, se empieza desde el principio
+    if (currentWordIndex >= allSpans.length || currentWordIndex === 0) {
+      currentWordIndex = 0;
+      lastParagraphRewarded = -1;
+      hintedIndex = -1;
+      drill = null;
+      resetStats();
+      starsAtStoryStart = starsCount;
+      sessionSaved = false;
+      allSpans.forEach(s => s.className = 'word');
+    }
+    skipEmptyTokens();
+
+    isListening = true;
+    isPausedForTTS = false;
+    consumedPerResult = {};
+    stats.segmentStart = Date.now();
+    stats.lastAdvanceAt = null;
+    focusCurrent();
+    verificarOmision();
+
+    try {
+      lastRestartAt = Date.now();
+      recognition.start();
+    } catch (e) {
+      // ya estaba iniciado
+    }
+
+    btnListen.classList.add('listening');
+    btnListenText.textContent = 'Detener lectura';
+    setStatus('Lina te escucha... ¡Empieza a leer en voz alta!', '');
+  }
+
+  function stopListening() {
+    const wasListening = isListening;
+    isListening = false;
+    isPausedForTTS = false;
+    clearTimeout(hesitationTimer);
+
+    if (stats && stats.segmentStart !== null) {
+      stats.activeMs += Date.now() - stats.segmentStart;
+      stats.segmentStart = null;
+    }
+    if (stats) stats.lastAdvanceAt = null;
+
+    if (recognition) {
+      try { recognition.stop(); } catch (e) {}
+    }
+    btnListen.classList.remove('listening');
+    btnListenText.textContent = 'Empezar a leer';
+    if (wasListening && currentWordIndex < allSpans.length && currentWordIndex > 0) {
+      setStatus('Micrófono en pausa. Toca "Empezar a leer" para continuar donde ibas.', '');
+    }
+  }
+
+  function toggleListening() {
+    if (isListening) stopListening();
+    else startListening();
+  }
+
+  // ===== Modo eco: Lina lee una frase y el niño la repite =====
+  const btnEcho = document.getElementById('btnEcho');
+  const btnEchoText = document.getElementById('btnEchoText');
+  const echoLimitSelect = document.getElementById('echoLimit');
+
+  // Divide la historia en frases. Un inciso como "-preguntó Manu." se une a la frase anterior.
+  function buildEchoLines() {
+    const lines = [];
+    for (let p = 0; p < paragraphStarts.length; p++) {
+      let cur = null;
+      sentencesOf(p).forEach(([s, e]) => {
+        const isTag = /^[-–—][a-záéíóúüñ]/.test(allSpans[s].textContent);
+        if (cur && isTag) {
+          cur.end = e;
+        } else {
+          if (cur) lines.push(cur);
+          cur = { start: s, end: e };
+        }
+      });
+      if (cur) lines.push(cur);
+    }
+    return lines;
+  }
+
+  function otorgarEstrellas(n) {
+    starsCount += n;
+    starsDisplay.textContent = starsCount;
+  }
+
+  function closeStatsSegment() {
+    if (stats && stats.segmentStart !== null) {
+      stats.activeMs += Date.now() - stats.segmentStart;
+      stats.segmentStart = null;
+    }
+  }
+
+  function limpiarResaltadoPalabras() {
+    setNarrationWord(-1);
+    allSpans.forEach(s => s.classList.remove('active'));
+  }
+
+  // Pone la frase actual en pantalla: resaltada, y el resto del cuento atenuado
+  function renderizarTextoLinea(start, end) {
+    allSpans.forEach(s => s.classList.remove('in-line'));
+    textContainer.querySelectorAll('.sentence').forEach(p => p.classList.remove('active-line'));
+    const sentence = allSpans[start]?.closest('.sentence');
+    if (sentence) {
+      sentence.classList.add('active-line');
+      sentence.setAttribute('aria-current', 'true');
+    }
+    for (let i = start; i <= end; i++) {
+      allSpans[i].classList.remove('read', 'ltm-visual-cue', 'omitted', 'active');
+      allSpans[i].classList.add('in-line');
+    }
+    allSpans[start].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function echoFocus() {
+    allSpans.forEach(s => s.classList.remove('active'));
+    const line = echoLines[lineaActualIndex];
+    if (line && echoPointer <= line.end) allSpans[echoPointer].classList.add('active');
+  }
+
+  // Micrófono del modo eco. Con permiso persistente se enciende solo en el turno del niño.
+  // Sin él (file://) se inicia una sola vez y se ignora lo que oye fuera del turno.
+  function echoMicOn() {
+    if (!recognition || echoMicRunning) return;
+    consumedPerResult = {};
+    try {
+      lastRestartAt = Date.now();
+      recognition.start();
+      echoMicRunning = true;
+    } catch (e) {
+      // si aún se estaba deteniendo, onend lo reiniciará
+    }
+  }
+
+  function echoMicOff() {
+    if (!recognition) return;
+    echoMicRunning = false;
+    try { recognition.stop(); } catch (e) {}
+  }
+
+  // Gestor de voz humana M4A. La ruta es relativa al archivo HTML; cada clip pertenece a una oración.
+  function detenerAudioOracion() {
+    tokenAudioOracion++;
+    clearTimeout(temporizadorAudioFallback);
+    temporizadorAudioFallback = null;
+    if (audioOracionActual) {
+      const oldAudio = audioOracionActual;
+      oldAudio.onended = null;
+      oldAudio.onerror = null;
+      oldAudio.onstalled = null;
+      try { oldAudio.pause(); oldAudio.currentTime = 0; } catch (e) {}
+      audioOracionActual = null;
+    }
+  }
+
+  function activarRespaldoNarracion(texto, start, end, tokenEco) {
+    // Si el dispositivo ofrece speechSynthesis, úsalo antes del respaldo visual cronometrado.
+    if (synth && typeof SpeechSynthesisUtterance !== 'undefined') {
+      synth.cancel();
+      const offsets = [];
+      let text = '';
+      for (let i = start; i <= end; i++) {
+        offsets.push(text.length);
+        text += allSpans[i].textContent.replace(/[-–—]/g, '') + (i < end ? ' ' : '');
+      }
+      const utterance = createUtterance(text || texto);
+      utterance.onboundary = event => {
+        if (!echoActive || echoPaused || tokenEco !== echoToken) return;
+        if (event.name && event.name !== 'word') return;
+        let word = 0;
+        for (let k = 0; k < offsets.length; k++) {
+          if (offsets[k] <= event.charIndex) word = k; else break;
+        }
+        setNarrationWord(start + word);
+      };
+      utterance.onend = () => {
+        if (echoActive && !echoPaused && tokenEco === echoToken) activarTurnoNiño();
+      };
+      utterance.onerror = () => activarRespaldoVisual(start, end, tokenEco);
+      try { synth.speak(utterance); }
+      catch (e) { activarRespaldoVisual(start, end, tokenEco); }
+      return;
+    }
+    activarRespaldoVisual(start, end, tokenEco);
+  }
+
+  function activarRespaldoVisual(start, end, tokenEco) {
+    if (!echoActive || echoPaused || tokenEco !== echoToken) return;
+    const count = Math.max(1, end - start + 1);
+    const duration = Math.min(6500, Math.max(2200, count * 430));
+    setStatus('Lina te muestra la oración. Escúchala o léela en pantalla...', 'info');
+    temporizadorAudioFallback = setTimeout(() => {
+      temporizadorAudioFallback = null;
+      if (echoActive && !echoPaused && tokenEco === echoToken) activarTurnoNiño();
+    }, duration);
+  }
+
+  function reproducirAudioOracion(index, start, end, texto, tokenEco) {
+    const audioPath = currentStoryObject === cuentoGatoTito ? AUDIOS_TITO[index] : null;
+    if (!audioPath || typeof Audio === 'undefined') {
+      activarRespaldoNarracion(texto, start, end, tokenEco);
+      return;
+    }
+
+    const playbackToken = ++tokenAudioOracion;
+    let fallbackStarted = false;
+    const audio = new Audio(audioPath);
+    audioOracionActual = audio;
+    audio.preload = 'auto';
+    audio.volume = 1;
+    const failToFallback = () => {
+      if (fallbackStarted || playbackToken !== tokenAudioOracion || !echoActive || echoPaused || tokenEco !== echoToken) return;
+      fallbackStarted = true;
+      clearTimeout(temporizadorAudioFallback);
+      audio.onended = audio.onerror = audio.onstalled = null;
+      try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+      if (audioOracionActual === audio) audioOracionActual = null;
+      activarRespaldoNarracion(texto, start, end, tokenEco);
+    };
+    audio.onended = () => {
+      if (playbackToken !== tokenAudioOracion || !echoActive || echoPaused || tokenEco !== echoToken) return;
+      clearTimeout(temporizadorAudioFallback);
+      audioOracionActual = null;
+      activarTurnoNiño();
+    };
+    audio.onerror = failToFallback;
+    audio.onstalled = failToFallback;
+    // Red de seguridad para fallos de servidor que no disparen error/onstalled.
+    temporizadorAudioFallback = setTimeout(failToFallback, 12000);
+    try {
+      const playback = audio.play();
+      if (playback && typeof playback.catch === 'function') playback.catch(failToFallback);
+    } catch (e) { failToFallback(); }
+  }
+
+  // Paso 1: Lina reproduce la voz humana (M4A) y luego da el turno al niño.
+  function ejecutarModoEcoLinea(index) {
+    if (!echoActive || echoPaused) return;
+    if (index >= echoLines.length) {
+      completarLecturaCuento();
+      return;
+    }
+
+    lineaActualIndex = index;
+    if (echoSessionLimit > 0 && echoSessionCount >= echoSessionLimit) {
+      finishEchoSession();
+      return;
+    }
+
+    const token = ++echoToken;
+    estadoTurno = 'NARRATING';
+    clearTimeout(temporizadorInactividad);
+    btnEcho.classList.remove('turn');
+    echoMicOff(); // micrófono apagado mientras habla la tutora
+
+    const { start, end } = echoLines[index];
+    echoPointer = start;
+    echoHelps = {};
+    renderizarTextoLinea(start, end);
+    setStatus('👩‍🏫 Escucha a Lina leer esta frase...', '');
+
+    // Audio humano pregrabado para Tito; para otros cuentos, TTS y luego respaldo visual.
+    const sentenceText = allSpans.slice(start, end + 1).map(span => span.textContent.replace(/[-–—]/g, '')).join(' ');
+    synth?.cancel();
+    reproducirAudioOracion(index, start, end, sentenceText, token);
+  }
+
+  // Pasos 2 y 3: turno del niño con el micrófono activo
+  function activarTurnoNiño() {
+    if (!echoActive || echoPaused) return;
+    estadoTurno = 'WAITING_CHILD';
+    limpiarResaltadoPalabras();
+    echoFocus();
+    btnEcho.classList.add('turn'); // indicador verde solo durante el turno del niño
+    setStatus(touchModeActive ? '👆 Tu turno: toca cada palabra en orden para avanzar.' : '🎤 ¡Tu turno! Lee la frase en voz alta...', '');
+
+    stats.segmentStart = Date.now();
+    stats.lastAdvanceAt = null;
+    stats.pendingUnmatched = false;
+    if (!touchModeActive) {
+      echoMicOn();
+      iniciarTemporizadorEspera();
+    }
+  }
+
+  function avanzarPalabraPorToque(index) {
+    if (!touchModeActive || !echoActive || echoPaused || estadoTurno !== 'WAITING_CHILD') return;
+    while (echoPointer <= echoLines[lineaActualIndex].end && allSpans[echoPointer].dataset.clean === '') echoPointer++;
+    if (index !== echoPointer) {
+      setStatus('Toca la palabra resaltada y seguimos paso a paso.', 'warn');
+      return;
+    }
+    markRead(index);
+    echoPointer++;
+    ltmStage = 0;
+    const line = echoLines[lineaActualIndex];
+    while (echoPointer <= line.end && allSpans[echoPointer].dataset.clean === '') echoPointer++;
+    if (echoPointer > line.end) { completarLineaEco(); return; }
+    echoFocus();
+    setStatus('¡Muy bien! Toca la siguiente palabra resaltada.', 'info');
+  }
+
+  function obtenerSiguientePalabraNoLeida() {
+    const line = echoLines[lineaActualIndex];
+    return line && echoPointer <= line.end ? echoPointer : -1;
+  }
+
+  // Paso 4: jerarquía Least-to-Most: espera, pista visual, pista fonética y modelado.
+  function iniciarTemporizadorEspera() {
+    clearTimeout(temporizadorInactividad);
+    if (!echoActive || echoPaused || touchModeActive || estadoTurno !== 'WAITING_CHILD') return;
+    if (ltmStage === 0) ltmStartedAt = Date.now();
+    const tiempos = PERFIL_TIEMPOS[perfilLectura || 'silabica'];
+    const hitos = [tiempos.visual, tiempos.fonetica, tiempos.modelado];
+    const idx = obtenerSiguientePalabraNoLeida();
+    if (idx < 0 || ltmStage >= hitos.length) return;
+    const limite = hitos[ltmStage];
+    temporizadorInactividad = setTimeout(() => {
+      if (!echoActive || echoPaused || estadoTurno !== 'WAITING_CHILD' || obtenerSiguientePalabraNoLeida() !== idx) return;
+      const stage = ltmStage++;
+      if (stage === 0) {
+        allSpans[idx].classList.add('ltm-visual-cue');
+        stats.helpWords.add(idx);
+        setStatus('Pista visual: mira la palabra y tómate tu tiempo.', '');
+        iniciarTemporizadorEspera();
+      } else if (stage === 1) {
+        const silaba = obtenerPrimeraSilaba(displayWord(idx));
+        setStatus(`Pista fonética: empieza con «${silaba}…»`, '');
+        estadoTurno = 'HELPING';
+        hablarAyudaLina(`Empieza con ${silaba}...`, () => {
+          estadoTurno = 'WAITING_CHILD';
+          iniciarTemporizadorEspera();
+        });
+      } else {
+        const palabra = displayWord(idx);
+        setStatus(`Lina modela la palabra: «${palabra}». Intenta leerla.`, '');
+        estadoTurno = 'HELPING';
+        hablarAyudaLina(`${palabra}. Inténtalo cuando estés listo.`, () => {
+          estadoTurno = 'WAITING_CHILD';
+          iniciarTemporizadorEspera();
+        });
+      }
+    }, Math.max(0, limite - (Date.now() - ltmStartedAt)));
+  }
+
+  // Lina dice la palabra; el micrófono se apaga mientras suena y se reanuda al terminar
+  function hablarAyudaLina(texto, callback) {
+    const token = echoToken;
+    echoMicOff();
+    speakText(texto, () => {
+      if (!echoActive || echoPaused || token !== echoToken) return;
+      if (callback) callback();
+      if (estadoTurno === 'WAITING_CHILD') echoMicOn();
+    });
+  }
+
+  function avanzarPalabraSinLeer(idx) {
+    stats.errorWords.add(idx);
+    stats.omissions++;
+    echoPointer = idx + 1;
+    ltmStage = 0;
+    ltmStartedAt = Date.now();
+    const line = echoLines[lineaActualIndex];
+    while (echoPointer <= line.end && allSpans[echoPointer].dataset.clean === '') {
+      markRead(echoPointer);
+      echoPointer++;
+    }
+    if (echoPointer > line.end) {
+      completarLineaEco();
+      return;
+    }
+    echoFocus();
+    iniciarTemporizadorEspera();
+  }
+
+  // Paso 5: valida lo que repitió el niño y avanza el turno
+  function procesarVozNiñoEnEco(palabrasHabladas) {
+    if (!echoActive || estadoTurno !== 'WAITING_CHILD') return;
+    const line = echoLines[lineaActualIndex];
+    let advanced = false;
+
+    palabrasHabladas.forEach(raw => {
+      if (echoPointer > line.end) return;
+      const spoken = normalize(raw);
+      if (!spoken) return;
+
+      while (echoPointer <= line.end && allSpans[echoPointer].dataset.clean === '') {
+        markRead(echoPointer);
+        echoPointer++;
+      }
+      if (echoPointer > line.end) return;
+
+      // Coincide con la palabra esperada o con una de las 2 siguientes
+      let hit = -1;
+      const maxLook = Math.min(2, line.end - echoPointer);
+      for (let look = 0; look <= maxLook; look++) {
+        if (matches(spoken, allSpans[echoPointer + look].dataset.clean)) {
+          hit = echoPointer + look;
+          break;
+        }
+      }
+      if (hit < 0) {
+        stats.pendingUnmatched = true;
+        return;
+      }
+
+      registerAdvance(hit, echoPointer);
+      for (let i = echoPointer; i < hit; i++) {
+        allSpans[i].classList.remove('active');
+        allSpans[i].classList.add('ltm-visual-cue'); // palabras saltadas en naranja suave
+      }
+      markRead(hit);
+      echoPointer = hit + 1;
+      ltmStage = 0;
+      ltmStartedAt = Date.now();
+      advanced = true;
+    });
+
+    if (!advanced) return;
+    clearTimeout(temporizadorInactividad);
+
+    if (echoPointer > line.end) {
+      completarLineaEco();
+      return;
+    }
+    echoFocus();
+    setStatus('¡Muy bien! Sigue con la frase...', '');
+    iniciarTemporizadorEspera();
+  }
+
+  function completarLineaEco() {
+    clearTimeout(temporizadorInactividad);
+    estadoTurno = 'TRANSITION';
+    echoMicOff();
+    closeStatsSegment();
+    limpiarResaltadoPalabras();
+    btnEcho.classList.remove('turn');
+
+    otorgarEstrellas(2);
+    echoSessionCount++;
+    setStatus('🌟 ¡Excelente repetición! Vamos con la siguiente frase.', 'celebrate');
+
+    const token = ++echoToken;
+    setTimeout(() => {
+      if (echoActive && !echoPaused && token === echoToken) ejecutarModoEcoLinea(lineaActualIndex + 1);
+    }, 1500);
+  }
+
+  // Fin de la sesión (límite de frases por edad)
+  function finishEchoSession() {
+    const n = echoSessionCount;
+    stopEcho(false);
+    setStatus(`🎉 ¡Terminaste tu sesión de ${n} frases y ganaste ${n * 2} estrellas! Vuelve cuando quieras para seguir con el cuento.`, 'celebrate');
+    speakText(`¡Muy bien! Terminaste tu sesión de ${n} frases.`);
+  }
+
+  // Fin del cuento: reporte final y preguntas de comprensión
+  function completarLecturaCuento() {
+    stopEcho(false);
+    lineaActualIndex = 0;
+    completeReading();
+  }
+
+  async function startEcho() {
+    if (echoActive) return;
+    if (!recognition && !touchModeActive) {
+      document.getElementById('btnTouchMode').hidden = false;
+      setStatus('No está disponible el reconocimiento de voz. Puedes seguir con lectura por toque.', 'warn');
+      return;
+    }
+    stopListening();
+    if (isNarrating) stopNarration();
+    hideReport();
+
+    const ok = touchModeActive ? true : await ensureMic();
+    if (!ok || echoActive) {
+      if (!ok) {
+        document.getElementById('btnTouchMode').hidden = false;
+        setStatus('Sin permiso de micrófono. Pulsa Modo táctil para leer por palabras.', 'warn');
+      }
+      return;
+    }
+
+    // El modo eco lleva su propio avance: se reinicia el de lectura libre
+    currentWordIndex = 0;
+    lastParagraphRewarded = -1;
+    hintedIndex = -1;
+    drill = null;
+    if (lineaActualIndex >= echoLines.length) lineaActualIndex = 0;
+    if (lineaActualIndex === 0) {
+      resetStats();
+      starsAtStoryStart = starsCount;
+      sessionSaved = false;
+    }
+
+    allSpans.forEach(s => s.className = 'word');
+    for (let l = 0; l < lineaActualIndex; l++) {
+      for (let i = echoLines[l].start; i <= echoLines[l].end; i++) markRead(i);
+    }
+
+    echoSessionLimit = Number(echoLimitSelect.value) || 0;
+    echoSessionCount = 0;
+    echoActive = true;
+    textContainer.classList.add('echo');
+    btnEchoText.textContent = 'Detener modo eco';
+    document.getElementById('btnPauseEcho').disabled = false;
+    echoPaused = false;
+    actualizarBotonPausa();
+
+    ejecutarModoEcoLinea(lineaActualIndex);
+  }
+
+  function stopEcho(showMessage) {
+    if (!echoActive) return;
+    echoActive = false;
+    echoPaused = false;
+    detenerAudioOracion();
+    echoToken++;
+    estadoTurno = 'IDLE';
+    clearTimeout(temporizadorInactividad);
+    closeStatsSegment();
+    if (synth) synth.cancel();
+    if (recognition) {
+      try { recognition.stop(); } catch (e) {}
+    }
+    echoMicRunning = false;
+    limpiarResaltadoPalabras();
+    allSpans.forEach(s => s.classList.remove('in-line'));
+    textContainer.classList.remove('echo');
+    btnEcho.classList.remove('turn');
+    btnEchoText.textContent = 'Modo eco';
+    echoPaused = false;
+    document.getElementById('btnPauseEcho').disabled = true;
+    document.getElementById('btnPauseEcho').textContent = '⏸️ Pausar';
+    if (showMessage) setStatus('Modo eco detenido. Toca "Modo eco" para continuar donde ibas.', '');
+  }
+
+  const profilePicker = document.getElementById('profilePicker');
+  const profileOptions = document.getElementById('profileOptions');
+  function iniciarExperiencia() {
+    const startButton = document.getElementById('btnIniciarApp');
+    startButton.disabled = true;
+    setStatus('¡Hola! Soy Lina, tu tutora de lectura. Vamos a leer juntos.', 'info');
+    hablarLina('¡Hola! Soy Lina, tu tutora de lectura. Vamos a leer juntos.', () => {
+      console.log('Audio desbloqueado correctamente');
+      profileOptions.hidden = false;
+      setStatus('Elige tu nivel de lectura para comenzar.', 'info');
+    });
+  }
+  document.getElementById('btnIniciarApp').addEventListener('click', iniciarExperiencia);
+  document.getElementById('profileSyllabic').addEventListener('click', () => {
+    perfilLectura = 'silabica';
+    profilePicker.hidden = true;
+    startEcho();
+  });
+  document.getElementById('profileFluent').addEventListener('click', () => {
+    perfilLectura = 'fluida';
+    profilePicker.hidden = true;
+    startEcho();
+  });
+
+  // Catálogo desplegable en la pantalla principal.
+  const storySelect = document.getElementById('storySelect');
+  CATALOG_CUENTOS.forEach((story, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = story.titulo;
+    storySelect.appendChild(option);
+  });
+  storySelect.value = '0';
+  storySelect.addEventListener('change', () => {
+    const selected = CATALOG_CUENTOS[Number(storySelect.value)];
+    if (selected) cargarNuevoCuento(selected, true);
+  });
+
+  // Cofre persistente: las medallas se conservan junto con el historial local.
+  function leerHistorialLocal() {
+    try { return JSON.parse(localStorage.getItem('historialLectura') || 'null') || { estrellasTotales: 0, cuentosLeidos: 0, medallas: [] }; }
+    catch (e) { return { estrellasTotales: 0, cuentosLeidos: 0, medallas: [] }; }
+  }
+  function actualizarCofreLogros(historial = leerHistorialLocal()) {
+    document.getElementById('achievementStars').textContent = Number(historial.estrellasTotales) || 0;
+    document.getElementById('achievementStories').textContent = Number(historial.cuentosLeidos) || 0;
+    const medals = Array.isArray(historial.medallas) ? historial.medallas : [];
+    document.getElementById('achievementMedals').textContent = medals.length ? medals.map(m => `🏅 ${m}`).join(' · ') : 'Aún no hay medallas';
+  }
+  const achievementsModal = document.getElementById('achievementsModal');
+  document.getElementById('btnAchievements').addEventListener('click', () => {
+    actualizarCofreLogros();
+    achievementsModal.hidden = false;
+  });
+  document.getElementById('btnCloseAchievements').addEventListener('click', () => { achievementsModal.hidden = true; document.getElementById('btnAchievements').focus(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !achievementsModal.hidden) { achievementsModal.hidden = true; document.getElementById('btnAchievements').focus(); } });
+  achievementsModal.addEventListener('click', e => { if (e.target === achievementsModal) achievementsModal.hidden = true; });
+  actualizarCofreLogros();
+  const historialInicial = leerHistorialLocal();
+  starsCount = Number(historialInicial.estrellasTotales) || 0;
+  starsDisplay.textContent = starsCount;
+
+  // Confeti CSS ligero, sin dependencias externas.
+  function lanzarConfeti() {
+    if (calmModeActive || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const layer = document.getElementById('confettiLayer');
+    layer.innerHTML = '';
+    const colors = ['#FF6B6B', '#FFD166', '#06D6A0', '#4D96FF', '#B892FF', '#FF8FAB'];
+    for (let i = 0; i < 48; i++) {
+      const piece = document.createElement('i');
+      piece.className = 'confetti-piece';
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.backgroundColor = colors[i % colors.length];
+      piece.style.animationDelay = `${Math.random() * 1.1}s`;
+      piece.style.setProperty('--drift', `${Math.round(Math.random() * 220 - 110)}px`);
+      layer.appendChild(piece);
+    }
+    setTimeout(() => { layer.innerHTML = ''; }, 4500);
+  }
+
+  // Minijuego: 30 segundos para escuchar y repetir palabras donde hubo dificultad.
+  function iniciarMicrofonoPractica() {
+    if (!wordPracticeActive || wordPracticePrompting || !recognition) return;
+    consumedPerResult = {};
+    try { recognition.start(); } catch (e) {}
+  }
+  function pedirPalabraPractica() {
+    if (!wordPracticeActive) return;
+    if (Date.now() >= wordPracticeEndsAt || wordPracticeIndex >= wordPracticeList.length) {
+      finalizarPracticaPalabras(); return;
+    }
+    const word = wordPracticeList[wordPracticeIndex];
+    document.getElementById('practiceProgress').textContent = `Palabra ${wordPracticeIndex + 1} de ${wordPracticeList.length}: escucha y repite.`;
+    wordPracticePrompting = true;
+    if (recognition) { try { recognition.stop(); } catch (e) {} }
+    speakText(`Repite: ${word}`, () => {
+      wordPracticePrompting = false;
+      iniciarMicrofonoPractica();
+    });
+  }
+  let wordPracticeEndsAt = 0;
+  function avanzarPracticaPalabra() {
+    if (!wordPracticeActive) return;
+    wordPracticeIndex++;
+    document.getElementById('practiceProgress').textContent = '¡Muy bien!';
+    pedirPalabraPractica();
+  }
+  function finalizarPracticaPalabras() {
+    wordPracticeActive = false;
+    wordPracticePrompting = false;
+    clearTimeout(wordPracticeTimer);
+    if (recognition) { try { recognition.stop(); } catch (e) {} }
+    document.getElementById('practiceProgress').textContent = `¡Práctica terminada! Repasaste ${Math.min(wordPracticeIndex, wordPracticeList.length)} palabra(s).`;
+    document.getElementById('btnPracticeWords').disabled = false;
+    speakText('¡Excelente práctica! Cada vez lees mejor.');
+  }
+  document.getElementById('btnPracticeWords').addEventListener('click', () => {
+    if (!recognition || !wordPracticeList.length) return;
+    wordPracticeIndex = 0;
+    wordPracticeActive = true;
+    wordPracticeEndsAt = Date.now() + 30000;
+    document.getElementById('btnPracticeWords').disabled = true;
+    wordPracticeTimer = setTimeout(finalizarPracticaPalabras, 30000);
+    pedirPalabraPractica();
+  });
+
+  // Pausa real: congela el reloj LTM, corta voz/micrófono y reanuda el turno pendiente.
+  const btnPauseEcho = document.getElementById('btnPauseEcho');
+  function actualizarBotonPausa() {
+    btnPauseEcho.textContent = echoPaused ? '▶️ Reanudar' : '⏸️ Pausar';
+  }
+  function togglePausaEco() {
+    if (!echoActive) return;
+    if (!echoPaused) {
+      echoPaused = true;
+      echoPauseStartedAt = Date.now();
+      echoStateBeforePause = estadoTurno;
+      clearTimeout(temporizadorInactividad);
+      echoToken++;
+      detenerAudioOracion();
+      if (synth) synth.cancel();
+      if (recognition) { try { recognition.stop(); } catch (e) {} }
+      echoMicRunning = false;
+      closeStatsSegment();
+      estadoTurno = 'PAUSED';
+      setStatus('Lectura en pausa. Tómate tu tiempo; pulsa Reanudar cuando estés listo.', 'info');
+    } else {
+      const elapsed = Date.now() - echoPauseStartedAt;
+      if (ltmStartedAt) ltmStartedAt += elapsed;
+      echoPaused = false;
+      const previous = echoStateBeforePause;
+      if (previous === 'NARRATING') {
+        ejecutarModoEcoLinea(lineaActualIndex);
+      } else if (previous === 'TRANSITION') {
+        ejecutarModoEcoLinea(lineaActualIndex + 1);
+      } else {
+        estadoTurno = 'WAITING_CHILD';
+        if (stats && !stats.segmentStart) stats.segmentStart = Date.now();
+        if (previous === 'HELPING') {
+          setStatus('🎤 Seguimos. Lee la palabra resaltada cuando estés listo.', 'info');
+        } else {
+          setStatus('🎤 Tu turno: continúa leyendo la frase.', 'info');
+        }
+        echoMicOn();
+        iniciarTemporizadorEspera();
+      }
+    }
+    actualizarBotonPausa();
+  }
+  btnPauseEcho.addEventListener('click', togglePausaEco);
+
+  document.getElementById('btnTouchMode').addEventListener('click', () => {
+    touchModeActive = true;
+    document.getElementById('btnTouchMode').setAttribute('aria-pressed', 'true');
+    setStatus('Modo táctil activado. Lina leerá cada frase y tú tocarás las palabras en orden.', 'info');
+    startEcho();
+  });
+
+  btnEcho.addEventListener('click', () => {
+    if (echoActive) stopEcho(true);
+    else startEcho();
+  });
+
+  // Herramientas DUA de presentación visual.
+  let fontSizePx = 24;
+  let comfortableLineSpacing = false;
+  document.getElementById('btnFontUp').addEventListener('click', () => {
+    fontSizePx = Math.min(36, fontSizePx + 2);
+    textContainer.style.setProperty('--reading-font-size', `${fontSizePx}px`);
+  });
+  document.getElementById('btnFontDown').addEventListener('click', () => {
+    fontSizePx = Math.max(18, fontSizePx - 2);
+    textContainer.style.setProperty('--reading-font-size', `${fontSizePx}px`);
+  });
+  document.getElementById('btnLineSpacing').addEventListener('click', event => {
+    comfortableLineSpacing = !comfortableLineSpacing;
+    textContainer.classList.toggle('comfortable-lines', comfortableLineSpacing);
+    event.currentTarget.setAttribute('aria-pressed', String(comfortableLineSpacing));
+  });
+  document.getElementById('btnEasyRead').addEventListener('click', event => {
+    const enabled = textContainer.classList.toggle('easy-read');
+    event.currentTarget.setAttribute('aria-pressed', String(enabled));
+  });
+  document.getElementById('readingTheme').addEventListener('change', event => {
+    textContainer.classList.remove('theme-cream', 'theme-mint', 'theme-sky');
+    textContainer.classList.add(event.target.value);
+  });
+  document.getElementById('btnCalmMode').addEventListener('click', event => {
+    calmModeActive = !calmModeActive;
+    document.body.classList.toggle('calm-mode', calmModeActive);
+    event.currentTarget.setAttribute('aria-pressed', String(calmModeActive));
+    event.currentTarget.textContent = calmModeActive ? '🌙 Modo tranquilo: activado' : '🌙 Modo tranquilo: apagado';
+  });
+  document.getElementById('btnPrintReport').addEventListener('click', () => window.print());
+
+  // ===== Eventos =====
+  btnListen.addEventListener('click', toggleListening);
+
+  btnReadAll.addEventListener('click', () => {
+    if (isNarrating) {
+      stopNarration();
+      setStatus('Lectura detenida. ¡Cuando quieras, es tu turno de leer!', '');
+    } else {
+      startNarration();
+    }
+  });
+
+  document.getElementById('btnClose').addEventListener('click', hideReport);
+  document.getElementById('btnAgain').addEventListener('click', () => {
+    hideReport();
+    lineaActualIndex = 0;
+    cargarNuevoCuento(currentStoryObject, false);
+    startEcho();
+  });
+
+  if (synth && typeof synth.onvoiceschanged !== 'undefined') {
+    synth.onvoiceschanged = () => {};
+  }
+
+  // ===== Inicialización =====
+  resetStats();
+  setupSpeechRecognition();
+  cargarNuevoCuento(cuentoGatoTito, false);
+  // El micrófono solo se activa durante el turno del niño en modo eco.
+</script>
+
+</body>
+</html>
