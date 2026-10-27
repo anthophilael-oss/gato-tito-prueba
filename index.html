@@ -90,40 +90,54 @@
       border-radius: 999px;
     }
 
+    /* ===== Bienvenida limpia: una idea y una acción por pantalla ===== */
     .profile-picker {
-      position: absolute;
+      position: fixed;
       inset: 0;
-      z-index: 20;
+      z-index: 60;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      gap: 14px;
-      padding: 96px 24px 24px; /* deja libre el encabezado (Luna, estrellas, cuento) */
+      justify-content: center;
+      padding: 24px;
       overflow-y: auto;
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.97);
+      background: #FFFFFF;
       text-align: center;
     }
-    /* Centra el contenido si cabe; si no cabe, arranca arriba y se puede desplazar. */
-    .profile-picker > :first-child { margin-top: auto; }
-    .profile-picker > :last-child { margin-bottom: auto; }
-    .profile-picker h2 { color: #1E3A8A; margin: 0; font-size: clamp(1.6rem, 4vw, 2.2rem); }
-    .profile-picker p { margin: 0 0 6px; font-size: 1.2rem; color: #475569; }
-    .welcome-portrait { flex: none; width: 158px; height: 158px; border: 5px solid #3B82F6; border-radius: 50%; overflow: hidden; background: #EAF4FF; box-shadow: 0 4px 14px #0002; }
-    .welcome-portrait img { width:100%; height:100%; object-fit:cover; }
-    .tutor-portrait { display:grid; place-items:center; flex:none; border-radius:50%; overflow:hidden; background:#EAF4FF; border:3px solid #FFB347; }
-    .tutor-portrait.compact { width:58px; height:58px; }
-    .tutor-portrait img { width:100%; height:100%; object-fit:cover; }
-    .tutor-fallback { width:100%; height:100%; display:grid; place-items:center; font-size:2.5rem; background:#EAF4FF; }
-    .tutor-fallback[hidden] { display:none; }
-    .welcome-portrait .tutor-fallback { font-size:5rem; }
-    .tutor-portrait.luna-gesture, .welcome-portrait.luna-gesture { animation:luna-gesture .7s ease-in-out 3; }
-    @keyframes luna-gesture { 50% { transform:translateY(-7px) rotate(-5deg); box-shadow:0 0 0 9px #FFE08A; } }
-    .word.luna-point-cue { outline:3px solid #FBC02D; outline-offset:4px; animation:luna-word-point .8s ease-in-out 2; }
-    @keyframes luna-word-point { 50% { transform:scale(1.1); } }
-    .profile-picker button { max-width: 420px; justify-content: center; }
-    @media (max-height: 620px) { .welcome-portrait { width: 110px; height: 110px; } }
+    .wstep { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; max-width: 560px; margin: auto; }
+    .wstep[hidden] { display: none; }
+    .profile-picker h1, .profile-picker h2 { color: #1E3A8A; margin: 0; font-size: clamp(2rem, 6vw, 2.75rem); line-height: 1.2; }
+    .profile-picker p { margin: 0; font-size: clamp(1.25rem, 3.6vw, 1.6rem); line-height: 1.5; color: #334155; }
+    .welcome-portrait { flex: none; width: min(52vh, 78vw, 340px); aspect-ratio: 1; border: 6px solid #3B82F6; border-radius: 50%; overflow: hidden; background: #EAF4FF; }
+    .welcome-portrait img { width: 100%; height: 100%; object-fit: cover; }
+    .welcome-portrait .tutor-fallback { font-size: 6rem; font-weight: 700; color: #1E3A8A; }
+    .tutor-fallback { width: 100%; height: 100%; display: grid; place-items: center; background: #EAF4FF; }
+    .tutor-fallback[hidden] { display: none; }
+    .wbtn { width: 100%; max-width: 440px; min-height: 60px; justify-content: center; font-size: 1.3rem; }
+    .wback { background: none; border: 0; color: #1E3A8A; text-decoration: underline; font: inherit; font-size: 1.1rem; min-height: 48px; min-width: 48px; padding: 8px 16px; cursor: pointer; }
+    .tutor-portrait.luna-gesture, .welcome-portrait.luna-gesture { animation: luna-gesture .7s ease-in-out 3; }
+    @keyframes luna-gesture { 50% { transform: translateY(-7px) rotate(-5deg); } }
+    .word.luna-point-cue { outline: 3px solid #FBC02D; outline-offset: 4px; animation: luna-word-point .8s ease-in-out 2; }
+    @keyframes luna-word-point { 50% { transform: scale(1.1); } }
+    @media (prefers-reduced-motion: reduce) { .luna-gesture, .word.luna-point-cue { animation: none !important; } }
+    @media (max-height: 560px) { .welcome-portrait { width: 120px; } }
+
+    /* ===== Logo (PNG) a la izquierda ===== */
+    .logo-slot { flex: none; display: flex; align-items: center; }
+    .logo-slot img { display: block; height: 52px; max-width: 150px; width: auto; object-fit: contain; }
+    .logo-slot img[hidden] { display: none; }
+    .welcome-logo { position: absolute; top: 20px; left: 20px; }
+    .welcome-logo img { height: 64px; max-width: 180px; }
+    /* ===== Práctica de botones y metodología ===== */
+    .wprogress { font-size: 1.05rem !important; font-weight: 700; color: #1E3A8A !important; }
+    .reading-box.sample { flex: none; width: 100%; margin: 0; text-align: left; overflow: visible; }
+    .reading-box.sample.easy-read { letter-spacing: .08em; word-spacing: .18em; font-family: Verdana, Arial, sans-serif; }
+    .tool-list { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 10px; text-align: left; }
+    .tool-list li { display: grid; grid-template-columns: minmax(130px, 46%) 1fr; align-items: center; gap: 12px; font-size: 1.15rem; color: #334155; }
+    .tbtn { font: inherit; font-weight: 700; min-height: 48px; min-width: 48px; padding: 8px 14px; border: 2px solid #64748B; border-radius: 12px; background: #fff; color: #1E293B; cursor: pointer; }
+    .tbtn[aria-pressed="true"] { background: #DBEAFE; border-color: #1D4ED8; outline: 3px solid #1D4ED8; }
+    .tlabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .method-list { margin: 0; padding: 0 0 0 1.6em; text-align: left; display: grid; gap: 14px; font-size: clamp(1.25rem, 3.6vw, 1.5rem); line-height: 1.45; color: #1E293B; }
+    @media (max-width: 480px) { .tool-list li { grid-template-columns: 1fr; gap: 4px; } }
     .profile-picker[hidden] { display: none; }
     .profile-options { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
     .profile-options[hidden] { display: none; }
@@ -164,11 +178,6 @@
       flex-shrink: 0;
     }
 
-    #statusBanner .tutor-avatar {
-      font-size: 2.2rem;
-      vertical-align: middle;
-      margin-right: 12px;
-    }
     #statusBanner.warn { background-color: #FEFCBF; border-color: #D69E2E; color: #744210; }
     #statusBanner.celebrate, #statusBanner.success { background-color: #C6F6D5; border-color: #38A169; color: #22543D; }
     #statusBanner.info { background-color: #EBF8FF; border-color: #3182CE; color: #2D3748; }
@@ -499,42 +508,78 @@
 
 <div class="container">
   <div class="header">
+    <!-- Espacio para el logo: guarda tu imagen como "logo.png" junto a este archivo -->
+    <div class="logo-slot"><img class="app-logo" src="logo.png" alt="Logo" onerror="this.hidden=true"></div>
     <div class="tutor">
-      <div class="tutor-portrait compact">
-        <img id="tutorImg" src="tutora_luna.png" alt="Luna, tutora virtual de lectura">
-        <span class="tutor-fallback" hidden aria-hidden="true">🌙</span>
-      </div>
       <div>
         <div class="tutor-label">Tutora virtual</div>
         <div class="tutor-name">Luna</div>
       </div>
     </div>
-    <div class="stars-box">⭐ <span id="stars">0</span></div>
+    <div class="stars-box">Estrellas: <span id="stars">0</span></div>
     <div class="header-actions">
-      <label class="story-picker" for="storySelect">📚 Cuento:
+      <label class="story-picker" for="storySelect">Cuento:
         <select id="storySelect" aria-label="Seleccionar cuento"></select>
       </label>
-      <button id="btnAchievements" class="btn-model">🏆 Mis Logros</button>
+      <button id="btnHome" class="btn-model" type="button">Volver al inicio</button>
+      <button id="btnAchievements" class="btn-model" type="button">Mis Logros</button>
     </div>
   </div>
 
   <div class="profile-picker" id="profilePicker" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-    <div class="welcome-portrait">
-      <img id="welcomeTutorImg" src="tutora_luna.png" alt="Luna, tu tutora virtual, te acompaña en la lectura">
-      <span class="tutor-fallback" hidden aria-hidden="true">🌙</span>
-    </div>
-    <h2 id="profileTitle">¡Hola! Soy Luna</h2>
-    <p>Tu tutora de lectura. Leeremos juntos, con calma y a tu ritmo.</p>
-    <button class="btn-mic" id="btnIniciarApp">🎙️ Comenzar lectura con Luna</button>
-    <div class="profile-options" id="profileOptions" hidden>
-      <p>Ahora elige tu nivel de lectura:</p>
-      <button class="btn-echo" id="profileSyllabic">1.º/2.º Grado - Lectura Silábica</button>
-      <button class="btn-model" id="profileFluent">3.º Grado - Lectura Fluida</button>
-    </div>
+    <div class="logo-slot welcome-logo"><img class="app-logo" src="logo.png" alt="Logo" onerror="this.hidden=true"></div>
+    <section class="wstep" id="stepWelcome">
+      <div class="welcome-portrait">
+        <img id="welcomeTutorImg" src="tutora_luna.png" alt="Luna, tu tutora virtual de lectura">
+        <span class="tutor-fallback" hidden aria-hidden="true">L</span>
+      </div>
+      <h1 id="profileTitle">¡Hola! Soy Luna</h1>
+      <p>Tu tutora de lectura. Leeremos juntos, con calma y a tu ritmo.</p>
+      <button type="button" class="btn-mic wbtn" id="btnIniciarApp">Empecemos</button>
+    </section>
+    <section class="wstep" id="stepTools" hidden aria-labelledby="toolsTitle">
+      <p class="wprogress">Práctica 1 de 2</p>
+      <h2 id="toolsTitle" tabindex="-1">Prueba los botones</h2>
+      <p>Toca cada botón y mira cómo cambia el texto.</p>
+      <div class="reading-box theme-sky sample" id="practiceSample">El gato Tito mira un pez rojo en el agua.</div>
+      <ul class="tool-list">
+        <li><button type="button" class="tbtn" id="pBtnDown" aria-label="Letra más pequeña">A−</button><span>Letra más pequeña</span></li>
+        <li><button type="button" class="tbtn" id="pBtnUp" aria-label="Letra más grande">A+</button><span>Letra más grande</span></li>
+        <li><button type="button" class="tbtn" id="pBtnLines" aria-pressed="false">Interlineado</button><span>Más espacio entre renglones</span></li>
+        <li><button type="button" class="tbtn" id="pBtnEasy" aria-pressed="false">Lectura fácil</button><span>Letras más separadas</span></li>
+        <li><label class="tlabel" for="pTheme">Fondo</label><select id="pTheme" class="tbtn"><option value="theme-sky" selected>Cielo</option><option value="theme-cream">Crema</option><option value="theme-mint">Menta</option></select><span>Cambia el color de la hoja</span></li>
+      </ul>
+      <button type="button" class="btn-mic wbtn" id="btnToolsNext">Siguiente</button>
+      <button type="button" class="wback" data-back="stepWelcome">Volver</button>
+    </section>
+    <section class="wstep" id="stepMethod" hidden aria-labelledby="methodTitle">
+      <p class="wprogress">Práctica 2 de 2</p>
+      <h2 id="methodTitle" tabindex="-1">Así leemos juntos</h2>
+      <ol class="method-list">
+        <li><strong>Luna lee</strong> una frase en voz alta. Tú escuchas.</li>
+        <li><strong>Tú repites</strong> la frase, como un eco.</li>
+        <li>Si te trabas, <strong>Luna te ayuda</strong> con la palabra.</li>
+        <li>Por cada frase que lees, <strong>ganas estrellas</strong>.</li>
+      </ol>
+      <button type="button" class="btn-mic wbtn" id="btnMethodNext">Elegir cuento y leer</button>
+      <button type="button" class="wback" data-back="stepTools">Volver</button>
+    </section>
+    <section class="wstep" id="stepStory" hidden aria-labelledby="storyStepTitle">
+      <h2 id="storyStepTitle" tabindex="-1">¿Qué cuento quieres leer?</h2>
+      <div class="profile-options" id="storyOptions"></div>
+      <button type="button" class="wback" data-back="stepMethod">Volver</button>
+    </section>
+    <section class="wstep" id="stepLevel" hidden aria-labelledby="levelStepTitle">
+      <h2 id="levelStepTitle" tabindex="-1">¿Cómo quieres leer?</h2>
+      <div class="profile-options" id="profileOptions">
+        <button type="button" class="btn-echo wbtn" id="profileSyllabic">1.º/2.º grado: lectura silábica</button>
+        <button type="button" class="btn-model wbtn" id="profileFluent">3.º grado: lectura fluida</button>
+      </div>
+      <button type="button" class="wback" data-back="stepStory">Volver</button>
+    </section>
   </div>
 
   <div class="status-banner" id="statusBanner" role="status" aria-live="polite" aria-atomic="true">
-    <span class="tutor-avatar" aria-hidden="true">👩‍🏫</span>
     <span id="statusText">¡Hola! Soy Luna. Vamos a leer juntos a tu ritmo.</span>
   </div>
 
@@ -552,11 +597,11 @@
   <div class="reading-box theme-sky" id="textContainer"></div>
 
   <div class="controls">
-    <button id="btnListen" class="btn-mic">🎤 <span id="btnListenText">Empezar a leer</span></button>
-    <button id="btnReadAll" class="btn-model">🔊 <span id="btnReadAllText">Escuchar cuento completo</span></button>
-    <button id="btnEcho" class="btn-echo">🔁 <span id="btnEchoText">Modo eco</span></button>
-    <button id="btnTouchMode" class="btn-model" type="button" hidden>👆 Modo táctil / lectura por toque</button>
-    <button id="btnPauseEcho" class="btn-model" disabled>⏸️ Pausar</button>
+    <button id="btnListen" class="btn-mic"><span id="btnListenText">Empezar a leer</span></button>
+    <button id="btnReadAll" class="btn-model"><span id="btnReadAllText">Escuchar cuento completo</span></button>
+    <button id="btnEcho" class="btn-echo"><span id="btnEchoText">Modo eco</span></button>
+    <button id="btnTouchMode" class="btn-model" type="button" hidden>Modo táctil / lectura por toque</button>
+    <button id="btnPauseEcho" class="btn-model" disabled>Pausar</button>
     <label class="echo-limit">Frases por sesión
       <select id="echoLimit">
         <option value="5">5 (6 años)</option>
@@ -568,18 +613,18 @@
 
   <!-- Reporte de desempeño y comprensión (al finalizar el cuento) -->
   <div class="report" id="report">
-    <h2>🌟 Reporte pedagógico de lectura</h2>
+    <h2>Reporte pedagógico de lectura</h2>
     <div class="report-student"><label for="studentName">Estudiante:</label><input id="studentName" type="text" placeholder="Nombre del estudiante"><span>Fecha: <strong id="reportDate"></strong></span></div>
     <p><strong>Cuento:</strong> <span id="reportStoryTitle">El gato Tito y el pez</span> · <strong>Perfil:</strong> <span id="reportProfile"></span></p>
     <section class="session-summary" id="sessionSummary" aria-live="polite">
-      <h3>🎉 ¡Cuento completado!</h3>
+      <h3>¡Cuento completado!</h3>
       <p id="sessionPraise">¡Lo hiciste excelente!</p>
       <p><strong id="sessionStars">+0 estrellas</strong> · Cuento #<strong id="sessionCount">0</strong></p>
       <p id="sessionHistory">Progreso acumulado: 0 estrellas</p>
       <div id="sessionWords"></div>
       <p class="qualitative-summary" id="qualitativeSummary"></p>
       <div class="practice-box" id="practiceBox" hidden>
-        <button id="btnPracticeWords" class="btn-echo">🪄 Practicar estas palabras (30s)</button>
+        <button id="btnPracticeWords" class="btn-echo">Practicar estas palabras (30s)</button>
         <p id="practiceProgress" aria-live="polite"></p>
       </div>
     </section>
@@ -591,7 +636,7 @@
       <div class="metric"><b id="mHesit">0</b><span>Vacilaciones (más de 3 s)</span></div>
       <div class="metric"><b id="mSelf">0</b><span>Autocorrecciones</span></div>
       <div class="metric"><b id="mIwl">0</b><span>Pausa entre palabras (cs)</span></div>
-      <div class="metric"><b id="mStars">0</b><span>Estrellas ⭐</span></div>
+      <div class="metric"><b id="mStars">0</b><span>Estrellas</span></div>
     </div>
 
     <h3>Palabras a practicar</h3>
@@ -602,26 +647,26 @@
     <div class="qresult" id="qResult"></div>
 
     <div class="report-actions">
-      <button id="btnAgain" class="btn-mic">🔁 Leer otra vez</button>
+      <button id="btnAgain" class="btn-mic">Leer otra vez</button>
       <button id="btnClose" class="btn-model">Cerrar</button>
-      <button id="btnPrintReport" class="btn-echo">🖨️ Imprimir Reporte Docente</button>
+      <button id="btnPrintReport" class="btn-echo">Imprimir Reporte Docente</button>
     </div>
   </div>
 </div>
 
 <div class="modal-backdrop" id="achievementsModal" hidden>
   <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="achievementsTitle">
-    <h2 id="achievementsTitle">🏆 Cofre de Estrellas y Logros</h2>
+    <h2 id="achievementsTitle">Cofre de Estrellas y Logros</h2>
     <div class="achievement-list">
-      <p>⭐ Estrellas acumuladas: <strong id="achievementStars">0</strong></p>
-      <p>📚 Cuentos completados: <strong id="achievementStories">0</strong></p>
-      <p>🎖️ Medallas ganadas: <strong id="achievementMedals">Aún no hay medallas</strong></p>
+      <p>Estrellas acumuladas: <strong id="achievementStars">0</strong></p>
+      <p>Cuentos completados: <strong id="achievementStories">0</strong></p>
+      <p>Medallas ganadas: <strong id="achievementMedals">Aún no hay medallas</strong></p>
     </div>
     <button id="btnCloseAchievements" class="btn-model" style="margin:16px auto 0">Cerrar</button>
   </section>
 </div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<button class="calm-toggle" id="btnCalmMode" type="button" aria-pressed="false">🌙 Modo tranquilo: apagado</button>
+<button class="calm-toggle" id="btnCalmMode" type="button" aria-pressed="false">Modo tranquilo: apagado</button>
 
 <script>
   // ===== Cuento activo =====
@@ -970,7 +1015,7 @@
     hideReport();
     renderText();
     echoLines = buildEchoLines();
-    setStatus(`👩‍🏫 Cuento: «${currentStoryTitle}». ¡Comencemos!`, 'info');
+    setStatus(`Cuento: «${currentStoryTitle}». ¡Comencemos!`, 'info');
     if (anunciar && perfilLectura) hablarLuna(`Vamos a leer: ${currentStoryTitle}. ¡Comencemos!`);
   }
 
@@ -1516,7 +1561,7 @@
     focusCurrent();
 
     const frase = allSpans.slice(s, e + 1).map(w => w.textContent).join(' ').replace(/[-–—]/g, ' ');
-    setStatus('🔁 Vamos a releer esta frase juntas. Escucha a Luna y léela otra vez.', 'warn');
+    setStatus('Vamos a releer esta frase juntas. Escucha a Luna y léela otra vez.', 'warn');
     reproducirVozHumanaLuna('phraseDrill', '¡Muy bien! Ahora volvamos a leer la frase completa.', () => {
       if (drill && synth) hablarLuna(frase);
     });
@@ -1591,10 +1636,10 @@
 
       // Retroalimentación inmediata: voz si se saltan 2 o más palabras, aviso en pantalla si es 1
       if (skippedWords.length >= 2) {
-        omissionNote = `⚠️ Te saltaste: "${skippedWords.join(' ')}"`;
+        omissionNote = `Te saltaste: "${skippedWords.join(' ')}"`;
         hablarLuna(`Te saltaste las palabras: "${skippedWords.join(' ')}". Seguimos desde ${displayWord(hit)}.`);
       } else if (skippedWords.length === 1) {
-        omissionNote = `⚠️ Omitiste la palabra: "${skippedWords[0]}"`;
+        omissionNote = `Omitiste la palabra: "${skippedWords[0]}"`;
       }
     });
 
@@ -1620,7 +1665,7 @@
            paragraphEnds[lastParagraphRewarded + 1] < currentWordIndex) {
       lastParagraphRewarded++;
       otorgarEstrellas(2);
-      message = `⭐ +2 estrellas por completar el párrafo ${lastParagraphRewarded + 1}. ¡Sigue así!`;
+      message = `+2 estrellas por completar el párrafo ${lastParagraphRewarded + 1}. ¡Sigue así!`;
 
       // Si hubo varios errores en el párrafo, se prepara una relectura de la frase más difícil
       const p = lastParagraphRewarded;
@@ -1728,7 +1773,7 @@
     showReport(report);
     lanzarConfeti();
     actualizarCofreLogros(historial);
-    setStatus(`🎉 ¡Felicidades! Terminaste de leer «${currentStoryTitle}».`, 'celebrate');
+    setStatus(`¡Felicidades! Terminaste de leer «${currentStoryTitle}».`, 'celebrate');
   }
 
   function showReport(report) {
@@ -1797,7 +1842,7 @@
       label.textContent = item.q;
       const listen = document.createElement('button');
       listen.className = 'listen-q';
-      listen.textContent = '🔊 Escuchar';
+      listen.textContent = 'Escuchar';
       listen.disabled = !preguntasHabilitadas;
       listen.setAttribute('aria-label', `Escuchar pregunta: ${item.q}`);
       listen.addEventListener('click', () => speakText(item.q));
@@ -2163,7 +2208,7 @@
     echoPointer = start;
     echoHelps = {};
     renderizarTextoLinea(start, end);
-    setStatus('👩‍🏫 Escucha a Luna leer esta frase...', '');
+    setStatus('Escucha a Luna leer esta frase...', '');
 
     // Audio humano pregrabado para Tito; para otros cuentos, TTS y luego respaldo visual.
     const sentenceText = allSpans.slice(start, end + 1).map(span => span.textContent.replace(/[-–—]/g, '')).join(' ');
@@ -2182,7 +2227,7 @@
     echoFocus();
     btnEcho.classList.add('turn'); // indicador verde solo durante el turno del niño
     const echoTokenForTurn = echoToken;
-    setStatus(touchModeActive ? '👆 Tu turno: toca cada palabra en orden para avanzar.' : '🎤 ¡Tu turno! Lee la frase en voz alta...', 'success');
+    setStatus(touchModeActive ? 'Tu turno: toca cada palabra en orden para avanzar.' : '¡Tu turno! Lee la frase en voz alta...', 'success');
 
     stats.segmentStart = Date.now();
     stats.lastAdvanceAt = null;
@@ -2258,7 +2303,7 @@
       } else if (stage >= 3) {
         // Apoyo físico parcial: se ofrece el modo táctil sin quitar la opción de seguir hablando.
         document.getElementById('btnTouchMode').hidden = false;
-        setStatus('Si quieres, toca el botón 👆 Modo táctil y avanza tocando cada palabra. También puedes seguir leyendo en voz alta.', 'info');
+        setStatus('Si quieres, toca el botón Modo táctil y avanza tocando cada palabra. También puedes seguir leyendo en voz alta.', 'info');
       } else {
         const palabra = displayWord(idx);
         const targetWord = allSpans[idx];
@@ -2378,7 +2423,7 @@
 
     otorgarEstrellas(2);
     echoSessionCount++;
-    setStatus('🌟 ¡Excelente repetición! Vamos con la siguiente frase.', 'celebrate');
+    setStatus('¡Excelente repetición! Vamos con la siguiente frase.', 'celebrate');
 
     const token = ++echoToken;
     setTimeout(() => {
@@ -2390,7 +2435,7 @@
   function finishEchoSession() {
     const n = echoSessionCount;
     stopEcho(false);
-    setStatus(`🎉 ¡Terminaste tu sesión de ${n} frases y ganaste ${n * 2} estrellas! Vuelve cuando quieras para seguir con el cuento.`, 'celebrate');
+    setStatus(`¡Terminaste tu sesión de ${n} frases y ganaste ${n * 2} estrellas! Vuelve cuando quieras para seguir con el cuento.`, 'celebrate');
     speakText(`¡Muy bien! Terminaste tu sesión de ${n} frases.`);
   }
 
@@ -2472,33 +2517,74 @@
     btnEchoText.textContent = 'Modo eco';
     echoPaused = false;
     document.getElementById('btnPauseEcho').disabled = true;
-    document.getElementById('btnPauseEcho').textContent = '⏸️ Pausar';
+    document.getElementById('btnPauseEcho').textContent = 'Pausar';
     if (showMessage) setStatus('Modo eco detenido. Toca "Modo eco" para continuar donde ibas.', '');
   }
 
   const profilePicker = document.getElementById('profilePicker');
-  const profileOptions = document.getElementById('profileOptions');
-  function iniciarExperiencia() {
-    const startButton = document.getElementById('btnIniciarApp');
-    startButton.disabled = true;
-    setStatus('¡Hola! Soy Luna, tu tutora de lectura. Vamos a leer juntos.', 'info');
-    const welcome = '¡Hola! Soy Luna, tu tutora de lectura. Hoy leeremos un cuento muy divertido. Primero yo leeré una frase para mostrarte cómo suena, y luego tú la repetirás como mi eco. Si te trabas, no te preocupes: yo te ayudaré. ¿Empezamos?';
-    reproducirVozHumanaLuna('bienvenida', welcome, () => {
-      profileOptions.hidden = false;
-      setStatus('Elige tu nivel de lectura para comenzar.', 'info');
+  const BEHIND_WELCOME = ['.header', '#statusBanner', '.reading-tools', '#story-title', '#textContainer', '.controls', '#report', '#btnCalmMode'];
+  function setBehindWelcome(inertOn) {
+    BEHIND_WELCOME.forEach(sel => { const el = document.querySelector(sel); if (el) el.inert = inertOn; });
+  }
+  function mostrarPaso(id, enfocar = true) {
+    ['stepWelcome', 'stepTools', 'stepMethod', 'stepStory', 'stepLevel'].forEach(p => { document.getElementById(p).hidden = (p !== id); });
+    if (!enfocar) return;
+    const step = document.getElementById(id);
+    const target = id === 'stepWelcome' ? document.getElementById('btnIniciarApp') : step.querySelector('h2');
+    if (target) target.focus();
+  }
+  function renderStoryOptions() {
+    const box = document.getElementById('storyOptions');
+    box.innerHTML = '';
+    CATALOG_CUENTOS.forEach((story, index) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn-model wbtn';
+      b.textContent = story.titulo;
+      b.addEventListener('click', () => {
+        cargarNuevoCuento(story, false);
+        mostrarPaso('stepLevel');
+      });
+      box.appendChild(b);
     });
   }
+  function iniciarExperiencia() {
+    mostrarPaso('stepTools');
+    hablarLuna('Vamos a practicar. Toca cada botón.');
+  }
+  function irAElegirCuento() {
+    renderStoryOptions();
+    mostrarPaso('stepStory');
+    hablarLuna('Elige el cuento que quieres leer.');
+  }
+  function cerrarBienvenida(perfil) {
+    perfilLectura = perfil;
+    profilePicker.hidden = true;
+    setBehindWelcome(false);
+    startEcho();
+  }
+  function volverAlInicio() {
+    stopEcho(false);
+    if (isListening) stopListening();
+    stopNarration();
+    hideReport();
+    if (synth) synth.cancel();
+    achievementsModal.hidden = true;
+    perfilLectura = null;
+    setStatus('¡Hola! Soy Luna. Vamos a leer juntos a tu ritmo.', 'info');
+    profilePicker.hidden = false;
+    setBehindWelcome(true);
+    mostrarPaso('stepWelcome');
+  }
+  setBehindWelcome(true);
+  document.getElementById('btnIniciarApp').focus();
+  document.getElementById('btnHome').addEventListener('click', volverAlInicio);
   document.getElementById('btnIniciarApp').addEventListener('click', iniciarExperiencia);
-  document.getElementById('profileSyllabic').addEventListener('click', () => {
-    perfilLectura = 'silabica';
-    profilePicker.hidden = true;
-    startEcho();
-  });
-  document.getElementById('profileFluent').addEventListener('click', () => {
-    perfilLectura = 'fluida';
-    profilePicker.hidden = true;
-    startEcho();
-  });
+  document.getElementById('btnToolsNext').addEventListener('click', () => mostrarPaso('stepMethod'));
+  document.getElementById('btnMethodNext').addEventListener('click', irAElegirCuento);
+  document.querySelectorAll('.wback').forEach(b => b.addEventListener('click', () => mostrarPaso(b.dataset.back)));
+  document.getElementById('profileSyllabic').addEventListener('click', () => cerrarBienvenida('silabica'));
+  document.getElementById('profileFluent').addEventListener('click', () => cerrarBienvenida('fluida'));
 
   // Catálogo desplegable en la pantalla principal.
   const storySelect = document.getElementById('storySelect');
@@ -2523,7 +2609,7 @@
     document.getElementById('achievementStars').textContent = Number(historial.estrellasTotales) || 0;
     document.getElementById('achievementStories').textContent = Number(historial.cuentosLeidos) || 0;
     const medals = Array.isArray(historial.medallas) ? historial.medallas : [];
-    document.getElementById('achievementMedals').textContent = medals.length ? medals.map(m => `🏅 ${m}`).join(' · ') : 'Aún no hay medallas';
+    document.getElementById('achievementMedals').textContent = medals.length ? medals.map(m => `${m}`).join(' · ') : 'Aún no hay medallas';
   }
   const achievementsModal = document.getElementById('achievementsModal');
   document.getElementById('btnAchievements').addEventListener('click', () => {
@@ -2616,7 +2702,7 @@
   // Pausa real: congela el reloj LTM, corta voz/micrófono y reanuda el turno pendiente.
   const btnPauseEcho = document.getElementById('btnPauseEcho');
   function actualizarBotonPausa() {
-    btnPauseEcho.textContent = echoPaused ? '▶️ Reanudar' : '⏸️ Pausar';
+    btnPauseEcho.textContent = echoPaused ? 'Reanudar' : 'Pausar';
   }
   function togglePausaEco() {
     if (!echoActive) return;
@@ -2647,9 +2733,9 @@
         estadoTurno = 'WAITING_CHILD';
         if (stats && !stats.segmentStart) stats.segmentStart = Date.now();
         if (previous === 'HELPING') {
-          setStatus('🎤 Seguimos. Lee la palabra resaltada cuando estés listo.', 'info');
+          setStatus('Seguimos. Lee la palabra resaltada cuando estés listo.', 'info');
         } else {
-          setStatus('🎤 Tu turno: continúa leyendo la frase.', 'info');
+          setStatus('Tu turno: continúa leyendo la frase.', 'info');
         }
         echoMicOn();
         iniciarTemporizadorEspera();
@@ -2669,7 +2755,7 @@
       ltmStage = 0;
       if (estadoTurno === 'WAITING_CHILD') {
         echoFocus();
-        setStatus('👆 Modo táctil: toca la palabra resaltada y sigue en orden.', 'info');
+        setStatus('Modo táctil: toca la palabra resaltada y sigue en orden.', 'info');
       }
       return;
     }
@@ -2685,32 +2771,55 @@
   // Herramientas DUA de presentación visual.
   let fontSizePx = 24;
   let comfortableLineSpacing = false;
-  document.getElementById('btnFontUp').addEventListener('click', () => {
-    fontSizePx = Math.min(36, fontSizePx + 2);
+  function sincronizarPractica() {
+    const sample = document.getElementById('practiceSample');
+    if (!sample) return;
+    sample.style.setProperty('--reading-font-size', `${fontSizePx}px`);
+    sample.classList.toggle('comfortable-lines', comfortableLineSpacing);
+    sample.classList.toggle('easy-read', textContainer.classList.contains('easy-read'));
+    ['theme-cream', 'theme-mint', 'theme-sky'].forEach(t => sample.classList.toggle(t, textContainer.classList.contains(t)));
+    document.getElementById('pBtnLines').setAttribute('aria-pressed', String(comfortableLineSpacing));
+    document.getElementById('pBtnEasy').setAttribute('aria-pressed', String(textContainer.classList.contains('easy-read')));
+  }
+  function cambiarTamano(delta) {
+    fontSizePx = Math.max(18, Math.min(36, fontSizePx + delta));
     textContainer.style.setProperty('--reading-font-size', `${fontSizePx}px`);
-  });
-  document.getElementById('btnFontDown').addEventListener('click', () => {
-    fontSizePx = Math.max(18, fontSizePx - 2);
-    textContainer.style.setProperty('--reading-font-size', `${fontSizePx}px`);
-  });
-  document.getElementById('btnLineSpacing').addEventListener('click', event => {
+    sincronizarPractica();
+  }
+  function alternarInterlineado() {
     comfortableLineSpacing = !comfortableLineSpacing;
     textContainer.classList.toggle('comfortable-lines', comfortableLineSpacing);
-    event.currentTarget.setAttribute('aria-pressed', String(comfortableLineSpacing));
-  });
-  document.getElementById('btnEasyRead').addEventListener('click', event => {
+    document.getElementById('btnLineSpacing').setAttribute('aria-pressed', String(comfortableLineSpacing));
+    sincronizarPractica();
+  }
+  function alternarLecturaFacil() {
     const enabled = textContainer.classList.toggle('easy-read');
-    event.currentTarget.setAttribute('aria-pressed', String(enabled));
-  });
-  document.getElementById('readingTheme').addEventListener('change', event => {
+    document.getElementById('btnEasyRead').setAttribute('aria-pressed', String(enabled));
+    sincronizarPractica();
+  }
+  function cambiarFondo(valor) {
     textContainer.classList.remove('theme-cream', 'theme-mint', 'theme-sky');
-    textContainer.classList.add(event.target.value);
-  });
+    textContainer.classList.add(valor);
+    document.getElementById('readingTheme').value = valor;
+    document.getElementById('pTheme').value = valor;
+    sincronizarPractica();
+  }
+  document.getElementById('btnFontUp').addEventListener('click', () => cambiarTamano(2));
+  document.getElementById('btnFontDown').addEventListener('click', () => cambiarTamano(-2));
+  document.getElementById('btnLineSpacing').addEventListener('click', alternarInterlineado);
+  document.getElementById('btnEasyRead').addEventListener('click', alternarLecturaFacil);
+  document.getElementById('readingTheme').addEventListener('change', e => cambiarFondo(e.target.value));
+  document.getElementById('pBtnUp').addEventListener('click', () => cambiarTamano(2));
+  document.getElementById('pBtnDown').addEventListener('click', () => cambiarTamano(-2));
+  document.getElementById('pBtnLines').addEventListener('click', alternarInterlineado);
+  document.getElementById('pBtnEasy').addEventListener('click', alternarLecturaFacil);
+  document.getElementById('pTheme').addEventListener('change', e => cambiarFondo(e.target.value));
+  sincronizarPractica();
   document.getElementById('btnCalmMode').addEventListener('click', event => {
     calmModeActive = !calmModeActive;
     document.body.classList.toggle('calm-mode', calmModeActive);
     event.currentTarget.setAttribute('aria-pressed', String(calmModeActive));
-    event.currentTarget.textContent = calmModeActive ? '🌙 Modo tranquilo: activado' : '🌙 Modo tranquilo: apagado';
+    event.currentTarget.textContent = calmModeActive ? 'Modo tranquilo: activado' : 'Modo tranquilo: apagado';
   });
   document.getElementById('btnPrintReport').addEventListener('click', () => window.print());
 
@@ -2748,8 +2857,11 @@
   }
 
   // Si el PNG externo falta, conserva un avatar lunar visible y accesible.
-  ['tutorImg', 'welcomeTutorImg'].forEach(id => {
+  ['welcomeTutorImg'].forEach(id => {
     const image = document.getElementById(id);
+    if (!image) return;
+    const mostrarRespaldo = () => { image.hidden = true; const f = image.nextElementSibling; if (f) f.hidden = false; };
+    if (image.complete && !image.naturalWidth) { mostrarRespaldo(); return; }
     image.addEventListener('error', () => {
       image.hidden = true;
       const fallback = image.nextElementSibling;
